@@ -2,6 +2,7 @@ defmodule ParserTest do
   use ExUnit.Case
 
   alias Q3Reporter.Parser
+  alias Q3Reporter.Parser.Game
 
   @game1 """
     0:00 ------------------------------------------------------------
@@ -16,7 +17,7 @@ defmodule ParserTest do
   """
 
   test "parse game1" do
-    assert Parser.parse(@game1) == [%{
+    assert Parser.parse(@game1) == [%Game{
       players: [
         %{
           id: "2",
@@ -129,7 +130,7 @@ defmodule ParserTest do
   """
 
   test "parse game with multiple players" do
-    assert Parser.parse(@game2) == [%{
+    assert Parser.parse(@game2) == [%Game{
       players: [
         %{
           id: "3",
@@ -216,7 +217,7 @@ defmodule ParserTest do
     games = "#{@game1}#{@game2}#{@game3}"
 
     assert Parser.parse(games) == [
-      %{
+      %Game{
         players: [
           %{deaths: 2, id: "4", kills: -2, nickname: "Zeh"},
           %{deaths: 0, id: "3", kills: 1, nickname: "Isgalamido"},
@@ -224,14 +225,14 @@ defmodule ParserTest do
         ],
         total_kills: 4
       },
-      %{
+      %Game{
         players: [
           %{deaths: 1, id: "3", kills: 0, nickname: "Mocinha"},
           %{deaths: 10, id: "2", kills: -5, nickname: "Isgalamido"}
         ],
         total_kills: 11
       },
-      %{
+      %Game{
         players: [%{deaths: 0, id: "2", kills: 0, nickname: "Isgalamido"}],
         total_kills: 0
       }
