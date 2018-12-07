@@ -30,6 +30,27 @@ defmodule Q3Reporter.Parser do
         end)
 
         [%{game | players: players} | games]
+
+      {:kill, :world, killed_id} ->
+        players = change_player(game.players, killed_id, fn player ->
+          %{player | kills: player.kills - 1, deaths: player.deaths + 1}
+        end)
+        total_kills = game.total_kills + 1
+
+        [%{game | players: players, total_kills: total_kills} | games]
+      {:kill, killer_id, killed_id} ->
+        players =
+          game.players
+          |> change_player(killer_id, fn player ->
+            %{player | kills: player.kills + 1}
+          end)
+          |> change_player(killed_id, fn player ->
+            %{player | deaths: player.deaths + 1}
+          end)
+
+        total_kills = game.total_kills + 1
+
+        [%{game | players: players, total_kills: total_kills} | games]
     end
   end
 
@@ -51,6 +72,13 @@ defmodule Q3Reporter.Parser do
     new_nickname = rest |> String.split("\\") |> Enum.at(1)
 
     {:change_player_nickname, id, new_nickname}
+  end
+
+  defp interpret_line("Kill: " <> info) do
+    [killer_id, killed_id, _] = String.split(info, " ", parts: 3)
+    killer_id = if killer_id == "1022", do: :world, else: killer_id
+
+    {:kill, killer_id, killed_id}
   end
 
   defp interpret_line(_) do

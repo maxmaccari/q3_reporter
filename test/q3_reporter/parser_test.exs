@@ -135,16 +135,106 @@ defmodule ParserTest do
           id: "3",
           nickname: "Mocinha",
           kills: 0,
-          deaths: 0
+          deaths: 1
         },
         %{
           id: "2",
           nickname: "Isgalamido",
-          kills: 0,
-          deaths: 0
+          kills: -5,
+          deaths: 10
         }
       ],
-      total_kills: 0
+      total_kills: 11
     }]
+  end
+
+  @game3 """
+    0:00 ------------------------------------------------------------
+    0:00 InitGame: \\sv_floodProtect\\1\\sv_maxPing\\0\\sv_minPing\\0\\sv_maxRate\\10000\\sv_minRate\\0\\sv_hostname\\Code Miner Server\\g_gametype\\0\\sv_privateClients\\2\\sv_maxclients\\16\\sv_allowDownload\\0\\dmflags\\0\\fraglimit\\20\\timelimit\\15\\g_maxGameClients\\0\\capturelimit\\8\\version\\ioq3 1.36 linux-x86_64 Apr 12 2009\\protocol\\68\\mapname\\q3dm17\\gamename\\baseq3\\g_needpass\\0
+    0:25 ClientConnect: 2
+    0:25 ClientUserinfoChanged: 2 n\\Dono da Bola\\t\\0\\model\\sarge/krusade\\hmodel\\sarge/krusade\\g_redteam\\\\g_blueteam\\\\c1\\5\\c2\\5\\hc\\95\\w\\0\\l\\0\\tt\\0\\tl\\0
+    0:27 ClientUserinfoChanged: 2 n\\Mocinha\\t\\0\\model\\sarge\\hmodel\\sarge\\g_redteam\\\\g_blueteam\\\\c1\\4\\c2\\5\\hc\\95\\w\\0\\l\\0\\tt\\0\\tl\\0
+    0:27 ClientBegin: 2
+    0:29 Item: 2 weapon_rocketlauncher
+    0:35 Item: 2 item_armor_shard
+    0:35 Item: 2 item_armor_shard
+    0:35 Item: 2 item_armor_shard
+    0:35 Item: 2 item_armor_combat
+    0:38 Item: 2 item_armor_shard
+    0:38 Item: 2 item_armor_shard
+    0:38 Item: 2 item_armor_shard
+    0:55 Item: 2 item_health_large
+    0:56 Item: 2 weapon_rocketlauncher
+    0:57 Item: 2 ammo_rockets
+    0:59 ClientConnect: 3
+    0:59 ClientUserinfoChanged: 3 n\\Isgalamido\\t\\0\\model\\xian/default\\hmodel\\xian/default\\g_redteam\\\\g_blueteam\\\\c1\\4\\c2\\5\\hc\\100\\w\\0\\l\\0\\tt\\0\\tl\\0
+    1:01 ClientUserinfoChanged: 3 n\\Isgalamido\\t\\0\\model\\uriel/zael\\hmodel\\uriel/zael\\g_redteam\\\\g_blueteam\\\\c1\\5\\c2\\5\\hc\\100\\w\\0\\l\\0\\tt\\0\\tl\\0
+    1:01 ClientBegin: 3
+    1:02 Item: 3 weapon_rocketlauncher
+    1:04 Item: 2 item_armor_shard
+    1:04 Item: 2 item_armor_shard
+    1:04 Item: 2 item_armor_shard
+    1:06 ClientConnect: 4
+    1:06 ClientUserinfoChanged: 4 n\\Zeh\\t\\0\\model\\sarge/default\\hmodel\\sarge/default\\g_redteam\\\\g_blueteam\\\\c1\\5\\c2\\5\\hc\\100\\w\\0\\l\\0\\tt\\0\\tl\\0
+    1:08 Kill: 3 2 6: Isgalamido killed Mocinha by MOD_ROCKET
+    1:08 ClientUserinfoChanged: 4 n\\Zeh\\t\\0\\model\\sarge/default\\hmodel\\sarge/default\\g_redteam\\\\g_blueteam\\\\c1\\1\\c2\\5\\hc\\100\\w\\0\\l\\0\\tt\\0\\tl\\0
+    1:08 ClientBegin: 4
+    1:10 Item: 3 item_armor_shard
+    1:10 Item: 3 item_armor_shard
+    1:10 Item: 3 item_armor_shard
+    1:10 Item: 3 item_armor_combat
+    1:11 Item: 4 weapon_shotgun
+    1:11 Item: 4 ammo_shells
+    1:16 Item: 4 item_health_large
+    1:18 Item: 4 weapon_rocketlauncher
+    1:18 Item: 4 ammo_rockets
+    1:26 Kill: 1022 4 22: <world> killed Zeh by MOD_TRIGGER_HURT
+    1:26 ClientUserinfoChanged: 2 n\\Dono da Bola\\t\\0\\model\\sarge\\hmodel\\sarge\\g_redteam\\\\g_blueteam\\\\c1\\4\\c2\\5\\hc\\95\\w\\0\\l\\0\\tt\\0\\tl\\0
+    1:26 Item: 3 weapon_railgun
+    1:29 Item: 2 weapon_rocketlauncher
+    1:29 Item: 3 weapon_railgun
+    1:32 Item: 3 weapon_railgun
+    1:32 Kill: 1022 4 22: <world> killed Zeh by MOD_TRIGGER_HURT
+    1:35 Item: 2 item_armor_shard
+    1:35 Item: 2 item_armor_shard
+    1:35 Item: 2 item_armor_shard
+    1:35 Item: 3 weapon_railgun
+    1:38 Item: 2 item_health_large
+    1:38 Item: 3 weapon_railgun
+    1:41 Kill: 1022 2 19: <world> killed Dono da Bola by MOD_FALLING
+    1:41 Item: 3 weapon_railgun
+    1:43 Item: 2 ammo_rockets
+    1:44 Item: 2 weapon_rocketlauncher
+    1:46 Item: 2 item_armor_shard
+    1:47 Item: 2 item_armor_shard
+    1:47 Item: 2 item_armor_shard
+    1:47 ShutdownGame:
+    1:47 ------------------------------------------------------------
+  """
+
+  test "parse multiple games with multiples kills" do
+    games = "#{@game1}#{@game2}#{@game3}"
+
+    assert Parser.parse(games) == [
+      %{
+        players: [
+          %{deaths: 2, id: "4", kills: -2, nickname: "Zeh"},
+          %{deaths: 0, id: "3", kills: 1, nickname: "Isgalamido"},
+          %{deaths: 2, id: "2", kills: -1, nickname: "Dono da Bola"}
+        ],
+        total_kills: 4
+      },
+      %{
+        players: [
+          %{deaths: 1, id: "3", kills: 0, nickname: "Mocinha"},
+          %{deaths: 10, id: "2", kills: -5, nickname: "Isgalamido"}
+        ],
+        total_kills: 11
+      },
+      %{
+        players: [%{deaths: 0, id: "2", kills: 0, nickname: "Isgalamido"}],
+        total_kills: 0
+      }
+    ]
   end
 end
