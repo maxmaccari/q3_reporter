@@ -2,7 +2,7 @@ defmodule ParserTest do
   use ExUnit.Case
 
   alias Q3Reporter.Parser
-  alias Q3Reporter.Parser.Game
+  alias Q3Reporter.Parser.{Game, Player}
 
   @game1 """
     0:00 ------------------------------------------------------------
@@ -19,7 +19,7 @@ defmodule ParserTest do
   test "parse game1" do
     assert Parser.parse(@game1) == [%Game{
       players: [
-        %{
+        %Player{
           id: "2",
           nickname: "Isgalamido",
           kills: 0,
@@ -132,13 +132,13 @@ defmodule ParserTest do
   test "parse game with multiple players" do
     assert Parser.parse(@game2) == [%Game{
       players: [
-        %{
+        %Player{
           id: "3",
           nickname: "Mocinha",
           kills: 0,
           deaths: 1
         },
-        %{
+        %Player{
           id: "2",
           nickname: "Isgalamido",
           kills: -5,
@@ -219,21 +219,23 @@ defmodule ParserTest do
     assert Parser.parse(games) == [
       %Game{
         players: [
-          %{deaths: 2, id: "4", kills: -2, nickname: "Zeh"},
-          %{deaths: 0, id: "3", kills: 1, nickname: "Isgalamido"},
-          %{deaths: 2, id: "2", kills: -1, nickname: "Dono da Bola"}
+          %Player{deaths: 2, id: "4", kills: -2, nickname: "Zeh"},
+          %Player{deaths: 0, id: "3", kills: 1, nickname: "Isgalamido"},
+          %Player{deaths: 2, id: "2", kills: -1, nickname: "Dono da Bola"}
         ],
         total_kills: 4
       },
       %Game{
         players: [
-          %{deaths: 1, id: "3", kills: 0, nickname: "Mocinha"},
-          %{deaths: 10, id: "2", kills: -5, nickname: "Isgalamido"}
+          %Player{deaths: 1, id: "3", kills: 0, nickname: "Mocinha"},
+          %Player{deaths: 10, id: "2", kills: -5, nickname: "Isgalamido"}
         ],
         total_kills: 11
       },
       %Game{
-        players: [%{deaths: 0, id: "2", kills: 0, nickname: "Isgalamido"}],
+        players: [
+          %Player{deaths: 0, id: "2", kills: 0, nickname: "Isgalamido"}
+        ],
         total_kills: 0
       }
     ]

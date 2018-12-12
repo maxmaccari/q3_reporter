@@ -12,14 +12,14 @@ defmodule Q3Reporter.Parser do
   defp parse_line(line, []) do
     case LogInterpreter.interpret_line(line) do
       nil -> []
-      :new_game -> Game.new_game([])
+      :new_game -> Game.new([])
     end
   end
 
   defp parse_line(line, [game | games]) do
     case LogInterpreter.interpret_line(line) do
       nil -> [game | games]
-      :new_game -> Game.new_game([game | games])
+      :new_game -> Game.new([game | games])
       {:connect_player, id} -> Game.connect_player(games, game, id)
       {:change_player_nickname, id, new_name} ->
         Game.change_player_info(games, game, id, :nickname, new_name)
