@@ -3,21 +3,24 @@ defmodule Q3Reporter do
   Read and parse a quake 3 logger showing the log summary.
   """
 
+  alias Q3Reporter.Parser
+
   @doc """
   Function that execute the log parsing by the given args.
 
   ## Examples
 
       iex> Q3Reporter.main([])
-      nil
+      :ok
 
   """
   def main(args \\ []) do
     args
     |> parse_args
-    |> open
-    |> read
-    |> result
+    |> open_file
+    |> read_file
+    |> parse
+    |> print_result
   end
 
   defp parse_args([]) do
@@ -25,37 +28,69 @@ defmodule Q3Reporter do
     usage: q3_reporter [filename]
     """
 
-    IO.puts(message)
-    System.halt(1)
+    {:error, message}
   end
 
   @permitted_args []
   defp parse_args(args) do
     {opts, filename, _} = OptionParser.parse(args, strict: @permitted_args)
 
-    {opts, filename}
+    {:ok, opts, filename}
   end
 
-  defp open({opts, filepath}) do
-    file = case File.open(filepath, [:read]) do
-      {:ok, file} -> file
-      {:error, :enoent} ->
-        IO.puts(:stderr, "'#{filepath}' not found...")
-
-        System.stop(1)
+  defp open_file({:ok, opts, filepath}) do
+    case File.open(filepath, [:read]) do
+      {:ok, file} -> {:ok, opts, file}
+      {:error, :enoent} -> {:error, "'#{filepath}' not found..."}
+      {:error, _} -> {:error, "Error trying to open '#{filepath}'"}
     end
-
-    {opts, file}
   end
 
-  defp read({opts, file}) do
+  defp open_file(error), do: error
+
+  defp read_file({:ok, opts, file}) do
     content = IO.read(file, :all)
     :ok = File.close(file)
 
-    {opts, content}
+    {:ok, opts, content}
   end
 
-  def result({_opts, content}) do
-    IO.puts(content)
+  defp read_file(error), do: error
+
+  defp parse({:ok, opts, content}) do
+    result = Parser.parse(content)
+
+    {:ok, opts, result}
+  end
+
+  defp parse(error), do: error
+
+  defp print_result({:ok, _opts, result}) do
+    result
+    |> Enum.reverse()
+    |> Enum.with_index(1)
+    |> Enum.map(fn {game, id} ->
+      players =
+        game.players
+        |> Enum.map(fn player ->
+          "- #{player.nickname}:\n" <>
+          "      Kills: #{player.kills}\n" <>
+          "      Deaths: #{player.deaths}"
+        end)
+        |> Enum.join("\n    ")
+
+      """
+        Game #{id}:
+          #{players}
+          => Total Kills: #{game.total_kills}
+      """
+    end)
+    |> Enum.reverse()
+    |> Enum.join("\n")
+    |> IO.puts()
+  end
+
+  defp print_result({:error, message}) do
+    IO.puts(message)
   end
 end
