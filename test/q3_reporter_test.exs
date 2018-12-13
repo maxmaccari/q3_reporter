@@ -126,4 +126,43 @@ defmodule Q3ReporterTest do
     }
     """
   end
+
+  test "parse a file and print it ranking" do
+    assert capture_io(fn ->
+      Q3Reporter.main(["--ranking", "priv/examples/game3.log"])
+    end) == """
+      Mocinha => 0
+      Dono da Bola => -1
+      Zeh => -2
+      Isgalamido => -4
+    """
+  end
+
+  test "parse a file and print its ranking in json format" do
+    assert capture_io(fn ->
+      Q3Reporter.main(["--ranking", "--json", "priv/examples/game3.log"])
+    end) ==
+    """
+    {
+      "ranking": [
+        {
+          "kills": 0,
+          "nickname": "Mocinha"
+        },
+        {
+          "kills": -1,
+          "nickname": "Dono da Bola"
+        },
+        {
+          "kills": -2,
+          "nickname": "Zeh"
+        },
+        {
+          "kills": -4,
+          "nickname": "Isgalamido"
+        }
+      ]
+    }
+    """
+  end
 end

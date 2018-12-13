@@ -31,12 +31,13 @@ defmodule Q3Reporter do
     {:error, message}
   end
 
-  @permitted_args [json: :boolean]
+  @permitted_args [json: :boolean, ranking: :boolean]
   defp parse_args(args) do
     {opts, filename, _} = OptionParser.parse(args, strict: @permitted_args)
 
     opts = %{
       json: Keyword.get(opts, :json, false),
+      ranking: Keyword.get(opts, :ranking, false),
       filename: filename
     }
 
@@ -70,7 +71,7 @@ defmodule Q3Reporter do
 
   defp parse(error), do: error
 
-  defp print_result({:ok, %{json: false}, result}) do
+  defp print_result({:ok, %{ranking: false, json: false}, result}) do
     result
     |> Enum.reverse()
     |> Enum.with_index(1)
@@ -95,7 +96,7 @@ defmodule Q3Reporter do
     |> IO.puts()
   end
 
-  defp print_result({:ok, %{json: true}, result}) do
+  defp print_result({:ok, %{ranking: false, json: true}, result}) do
     result
     |> Enum.reverse()
     |> Enum.with_index(1)
@@ -111,6 +112,39 @@ defmodule Q3Reporter do
       {"game#{id}", game}
     end)
     |> Enum.into(%{})
+    |> Jason.encode!(pretty: true)
+    |> IO.puts()
+  end
+
+  defp print_result({:ok, %{ranking: true, json: false}, result}) do
+    result
+    |> Enum.map(&Map.get(&1, :players))
+    |> List.flatten()
+    |> Enum.reduce(%{}, fn player, acc ->
+      Map.update(acc, player.nickname, player.kills, &(&1 +player.kills))
+    end)
+    |> Map.to_list()
+    |> Enum.sort(&(elem(&2, 1) <= elem(&1, 1)))
+    |> Enum.map(fn {nickname, kills} -> "  #{nickname} => #{kills}" end)
+    |> Enum.join("\n")
+    |> IO.puts()
+  end
+
+  defp print_result({:ok, %{ranking: true, json: true}, result}) do
+    ranking =
+      result
+      |> Enum.map(&Map.get(&1, :players))
+      |> List.flatten()
+      |> Enum.reduce(%{}, fn player, acc ->
+        Map.update(acc, player.nickname, player.kills, &(&1 +player.kills))
+      end)
+      |> Map.to_list()
+      |> Enum.sort(&(elem(&2, 1) <= elem(&1, 1)))
+      |> Enum.map(fn {nickname, kills} ->
+        %{"nickname" => nickname, "kills" => kills}
+      end)
+
+    %{"ranking" => ranking}
     |> Jason.encode!(pretty: true)
     |> IO.puts()
   end
