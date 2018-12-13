@@ -1,4 +1,4 @@
-defmodule ParserTest do
+defmodule Q3Reporter.ParserTest do
   use ExUnit.Case
 
   alias Q3Reporter.Parser

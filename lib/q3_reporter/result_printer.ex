@@ -1,4 +1,6 @@
 defmodule Q3Reporter.ResultPrinter do
+
+  alias Q3Reporter.Ranking
   def print(%{ranking: false, json: false}, result) do
     result
     |> Enum.reverse()
@@ -46,13 +48,7 @@ defmodule Q3Reporter.ResultPrinter do
 
   def print(%{ranking: true, json: false}, result) do
     result
-    |> Enum.map(&Map.get(&1, :players))
-    |> List.flatten()
-    |> Enum.reduce(%{}, fn player, acc ->
-      Map.update(acc, player.nickname, player.kills, &(&1 +player.kills))
-    end)
-    |> Map.to_list()
-    |> Enum.sort(&(elem(&2, 1) <= elem(&1, 1)))
+    |> Ranking.build()
     |> Enum.map(fn {nickname, kills} -> "  #{nickname} => #{kills}" end)
     |> Enum.join("\n")
     |> IO.puts()
@@ -61,13 +57,7 @@ defmodule Q3Reporter.ResultPrinter do
   def print(%{ranking: true, json: true}, result) do
     ranking =
       result
-      |> Enum.map(&Map.get(&1, :players))
-      |> List.flatten()
-      |> Enum.reduce(%{}, fn player, acc ->
-        Map.update(acc, player.nickname, player.kills, &(&1 +player.kills))
-      end)
-      |> Map.to_list()
-      |> Enum.sort(&(elem(&2, 1) <= elem(&1, 1)))
+      |> Ranking.build()
       |> Enum.map(fn {nickname, kills} ->
         %{"nickname" => nickname, "kills" => kills}
       end)

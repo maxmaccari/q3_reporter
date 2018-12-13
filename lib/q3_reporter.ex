@@ -3,7 +3,7 @@ defmodule Q3Reporter do
   Read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.{Parser, ResultPrinter}
+  alias Q3Reporter.{Parser, ResultPrinter, WebServer}
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -31,13 +31,14 @@ defmodule Q3Reporter do
     {:error, message}
   end
 
-  @permitted_args [json: :boolean, ranking: :boolean]
+  @permitted_args [json: :boolean, ranking: :boolean, web: :boolean]
   defp parse_args(args) do
     {opts, filename, _} = OptionParser.parse(args, strict: @permitted_args)
 
     opts = %{
       json: Keyword.get(opts, :json, false),
       ranking: Keyword.get(opts, :ranking, false),
+      web: Keyword.get(opts, :web, false),
       filename: filename
     }
 
@@ -70,6 +71,10 @@ defmodule Q3Reporter do
   end
 
   defp parse(error), do: error
+
+  defp print_result({:ok, %{web: true}, result}) do
+    WebServer.start(result)
+  end
 
   defp print_result({:ok, opts, result}) do
     ResultPrinter.print(opts, result)
