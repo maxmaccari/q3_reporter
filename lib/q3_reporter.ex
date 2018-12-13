@@ -31,14 +31,19 @@ defmodule Q3Reporter do
     {:error, message}
   end
 
-  @permitted_args []
+  @permitted_args [json: :boolean]
   defp parse_args(args) do
     {opts, filename, _} = OptionParser.parse(args, strict: @permitted_args)
 
-    {:ok, opts, filename}
+    opts = %{
+      json: Keyword.get(opts, :json, false),
+      filename: filename
+    }
+
+    {:ok, opts}
   end
 
-  defp open_file({:ok, opts, filepath}) do
+  defp open_file({:ok, %{filename: filepath} = opts}) do
     case File.open(filepath, [:read]) do
       {:ok, file} -> {:ok, opts, file}
       {:error, :enoent} -> {:error, "'#{filepath}' not found..."}
@@ -65,7 +70,7 @@ defmodule Q3Reporter do
 
   defp parse(error), do: error
 
-  defp print_result({:ok, _opts, result}) do
+  defp print_result({:ok, %{json: false}, result}) do
     result
     |> Enum.reverse()
     |> Enum.with_index(1)
@@ -87,6 +92,26 @@ defmodule Q3Reporter do
     end)
     |> Enum.reverse()
     |> Enum.join("\n")
+    |> IO.puts()
+  end
+
+  defp print_result({:ok, %{json: true}, result}) do
+    result
+    |> Enum.reverse()
+    |> Enum.with_index(1)
+    |> Enum.map(fn {game, id} ->
+      game =
+        game.players
+        |> Enum.map(fn player ->
+          {player.nickname, %{"kills" => player.kills, "deaths" => player.deaths}}
+        end)
+        |> Enum.into(%{})
+        |> Map.put("totalKills", game.total_kills)
+
+      {"game#{id}", game}
+    end)
+    |> Enum.into(%{})
+    |> Jason.encode!(pretty: true)
     |> IO.puts()
   end
 

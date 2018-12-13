@@ -84,4 +84,46 @@ defmodule Q3ReporterTest do
 
     """
   end
+
+  test "parse a file and print in json format" do
+    assert capture_io(fn ->
+      Q3Reporter.main(["--json", "priv/examples/game3.log"])
+    end) == """
+    {
+      "game1": {
+        "Isgalamido": {
+          "deaths": 0,
+          "kills": 0
+        },
+        "totalKills": 0
+      },
+      "game2": {
+        "Isgalamido": {
+          "deaths": 10,
+          "kills": -5
+        },
+        "Mocinha": {
+          "deaths": 1,
+          "kills": 0
+        },
+        "totalKills": 11
+      },
+      "game3": {
+        "Dono da Bola": {
+          "deaths": 2,
+          "kills": -1
+        },
+        "Isgalamido": {
+          "deaths": 0,
+          "kills": 1
+        },
+        "Zeh": {
+          "deaths": 2,
+          "kills": -2
+        },
+        "totalKills": 4
+      }
+    }
+    """
+  end
 end
