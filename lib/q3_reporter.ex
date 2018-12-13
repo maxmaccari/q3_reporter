@@ -3,7 +3,7 @@ defmodule Q3Reporter do
   Read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.Parser
+  alias Q3Reporter.{Parser, ResultPrinter}
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -71,82 +71,8 @@ defmodule Q3Reporter do
 
   defp parse(error), do: error
 
-  defp print_result({:ok, %{ranking: false, json: false}, result}) do
-    result
-    |> Enum.reverse()
-    |> Enum.with_index(1)
-    |> Enum.map(fn {game, id} ->
-      players =
-        game.players
-        |> Enum.map(fn player ->
-          "- #{player.nickname}:\n" <>
-          "      Kills: #{player.kills}\n" <>
-          "      Deaths: #{player.deaths}"
-        end)
-        |> Enum.join("\n    ")
-
-      """
-        Game #{id}:
-          #{players}
-          => Total Kills: #{game.total_kills}
-      """
-    end)
-    |> Enum.reverse()
-    |> Enum.join("\n")
-    |> IO.puts()
-  end
-
-  defp print_result({:ok, %{ranking: false, json: true}, result}) do
-    result
-    |> Enum.reverse()
-    |> Enum.with_index(1)
-    |> Enum.map(fn {game, id} ->
-      game =
-        game.players
-        |> Enum.map(fn player ->
-          {player.nickname, %{"kills" => player.kills, "deaths" => player.deaths}}
-        end)
-        |> Enum.into(%{})
-        |> Map.put("totalKills", game.total_kills)
-
-      {"game#{id}", game}
-    end)
-    |> Enum.into(%{})
-    |> Jason.encode!(pretty: true)
-    |> IO.puts()
-  end
-
-  defp print_result({:ok, %{ranking: true, json: false}, result}) do
-    result
-    |> Enum.map(&Map.get(&1, :players))
-    |> List.flatten()
-    |> Enum.reduce(%{}, fn player, acc ->
-      Map.update(acc, player.nickname, player.kills, &(&1 +player.kills))
-    end)
-    |> Map.to_list()
-    |> Enum.sort(&(elem(&2, 1) <= elem(&1, 1)))
-    |> Enum.map(fn {nickname, kills} -> "  #{nickname} => #{kills}" end)
-    |> Enum.join("\n")
-    |> IO.puts()
-  end
-
-  defp print_result({:ok, %{ranking: true, json: true}, result}) do
-    ranking =
-      result
-      |> Enum.map(&Map.get(&1, :players))
-      |> List.flatten()
-      |> Enum.reduce(%{}, fn player, acc ->
-        Map.update(acc, player.nickname, player.kills, &(&1 +player.kills))
-      end)
-      |> Map.to_list()
-      |> Enum.sort(&(elem(&2, 1) <= elem(&1, 1)))
-      |> Enum.map(fn {nickname, kills} ->
-        %{"nickname" => nickname, "kills" => kills}
-      end)
-
-    %{"ranking" => ranking}
-    |> Jason.encode!(pretty: true)
-    |> IO.puts()
+  defp print_result({:ok, opts, result}) do
+    ResultPrinter.print(opts, result)
   end
 
   defp print_result({:error, message}) do
