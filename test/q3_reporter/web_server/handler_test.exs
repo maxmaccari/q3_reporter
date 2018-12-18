@@ -54,9 +54,9 @@ defmodule Q3Reporter.WebServer.HandlerTest do
     }
   ]
 
-  test "GET /root" do
+  test "GET /ranking" do
     request = """
-    GET / HTTP/1.1\r
+    GET /ranking HTTP/1.1\r
     Host: example.com\r
     User-Agent: ExampleBrowser/1.0\r
     Accept: */*\r
@@ -68,12 +68,51 @@ defmodule Q3Reporter.WebServer.HandlerTest do
     assert response == """
     HTTP/1.1 200 OK\r
     Content-Type: text/html\r
-    Content-Length: 79\r
+    Content-Length: 90\r
     \r
     <ul>
       <li>Mocinha => 8</li>
       <li>Dono da Bola => 7</li>
       <li>Isgalamido => 2</li>
+    </ul>
+    """
+  end
+
+  test "GET /summary" do
+    request = """
+    GET /summary HTTP/1.1\r
+    Host: example.com\r
+    User-Agent: ExampleBrowser/1.0\r
+    Accept: */*\r
+    \r
+    """
+
+    response = Handler.handle(request, @result)
+
+    assert response == """
+    HTTP/1.1 200 OK\r
+    Content-Type: text/html\r
+    Content-Length: 446\r
+    \r
+    <ul>
+      <li>
+        <h3>Game 2</h3>
+        <p>Total Kills: 12</p>
+        <ul>
+          <li>Isgalamido: 0 kills / 4 deaths</li>
+          <li>Dono da Bola: 4 kills / 4 deaths</li>
+          <li>Mocinha: 9 kills / 0 deaths</li>
+        </ul>
+      </li>
+      <li>
+        <h3>Game 1</h3>
+        <p>Total Kills: 4</p>
+        <ul>
+          <li>Isgalamido: 2 kills / 4 deaths</li>
+          <li>Dono da Bola: 3 kills / 4 deaths</li>
+          <li>Mocinha: -1 kills / 5 deaths</li>
+        </ul>
+      </li>
     </ul>
     """
   end

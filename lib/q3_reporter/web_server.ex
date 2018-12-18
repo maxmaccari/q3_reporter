@@ -1,5 +1,5 @@
 defmodule Q3Reporter.WebServer do
-  alias Q3Reporter.Ranking
+  alias Q3Reporter.WebServer.Handler
 
   @port 8080
   def start(result) do
@@ -38,25 +38,8 @@ defmodule Q3Reporter.WebServer do
     {client_socket, request}
   end
 
-  defp handle_request({client_socket, _request}, result) do
-    body =
-      result
-      |> Ranking.build()
-      |> Enum.map(fn {nickname, kills} -> "  <li>#{nickname} => #{kills}</li>" end)
-      |> Enum.join("\n")
-
-    response =
-      """
-      HTTP/1.1 200 OK\r
-      Content-Type: text/html\r
-      Content-Length: #{String.length(body)}\r
-      \r
-      <ul>
-      #{body}
-      </ul>
-      """
-
-    {client_socket, response}
+  defp handle_request({client_socket, request}, result) do
+    {client_socket, Handler.handle(request, result)}
   end
 
   defp send_response({client_socket, response}) do
