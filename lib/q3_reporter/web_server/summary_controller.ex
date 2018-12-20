@@ -9,8 +9,6 @@ defmodule Q3Reporter.WebServer.SummaryController do
       |> Enum.map(fn {game, id} -> Map.put(game, :id, id) end)
       |> Enum.reverse()
 
-    body = EEx.eval_file("templates/summary_index.html.eex", games: games)
-
-    send_resp(conv, body)
+    render(conv, "summary_index", games: games)
   end
 end

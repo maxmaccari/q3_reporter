@@ -4,10 +4,6 @@ defmodule Q3Reporter.WebServer.RankingController do
   import Q3Reporter.WebServer.Controller
 
   def index(conv, result) do
-    ranking = Ranking.build(result)
-
-    body = EEx.eval_file("templates/ranking_index.html.eex", ranking: ranking)
-
-    send_resp(conv, body)
+    render(conv, "ranking_index", ranking: Ranking.build(result))
   end
 end

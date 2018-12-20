@@ -17,4 +17,13 @@ defmodule Q3Reporter.WebServer.Controller do
   def send_resp(conv, body) do
     send_resp(conv, 200, body)
   end
+
+  @templates_path Path.expand("../../../templates", __DIR__)
+
+  def render(conv, template, bindings) do
+    template = Path.join(@templates_path, "#{template}.html.eex")
+    body = EEx.eval_file(template, bindings)
+
+    send_resp(conv, body)
+  end
 end
