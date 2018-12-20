@@ -1,6 +1,6 @@
 defmodule Q3Reporter.ResultPrinter do
-
   alias Q3Reporter.Ranking
+
   def print(%{ranking: false, json: false}, result) do
     result
     |> Enum.reverse()
@@ -10,8 +10,7 @@ defmodule Q3Reporter.ResultPrinter do
         game.players
         |> Enum.map(fn player ->
           "- #{player.nickname}:\n" <>
-          "      Kills: #{player.kills}\n" <>
-          "      Deaths: #{player.deaths}"
+            "      Kills: #{player.kills}\n" <> "      Deaths: #{player.deaths}"
         end)
         |> Enum.join("\n    ")
 

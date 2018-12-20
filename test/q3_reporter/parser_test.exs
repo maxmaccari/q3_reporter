@@ -17,17 +17,19 @@ defmodule Q3Reporter.ParserTest do
   """
 
   test "parse game1" do
-    assert Parser.parse(@game1) == [%Game{
-      players: [
-        %Player{
-          id: "2",
-          nickname: "Isgalamido",
-          kills: 0,
-          deaths: 0
-        }
-      ],
-      total_kills: 0
-    }]
+    assert Parser.parse(@game1) == [
+             %Game{
+               players: [
+                 %Player{
+                   id: "2",
+                   nickname: "Isgalamido",
+                   kills: 0,
+                   deaths: 0
+                 }
+               ],
+               total_kills: 0
+             }
+           ]
   end
 
   test "parse multiple games" do
@@ -130,23 +132,25 @@ defmodule Q3Reporter.ParserTest do
   """
 
   test "parse game with multiple players" do
-    assert Parser.parse(@game2) == [%Game{
-      players: [
-        %Player{
-          id: "3",
-          nickname: "Mocinha",
-          kills: 0,
-          deaths: 1
-        },
-        %Player{
-          id: "2",
-          nickname: "Isgalamido",
-          kills: -5,
-          deaths: 10
-        }
-      ],
-      total_kills: 11
-    }]
+    assert Parser.parse(@game2) == [
+             %Game{
+               players: [
+                 %Player{
+                   id: "3",
+                   nickname: "Mocinha",
+                   kills: 0,
+                   deaths: 1
+                 },
+                 %Player{
+                   id: "2",
+                   nickname: "Isgalamido",
+                   kills: -5,
+                   deaths: 10
+                 }
+               ],
+               total_kills: 11
+             }
+           ]
   end
 
   @game3 """
@@ -217,27 +221,27 @@ defmodule Q3Reporter.ParserTest do
     games = "#{@game1}#{@game2}#{@game3}"
 
     assert Parser.parse(games) == [
-      %Game{
-        players: [
-          %Player{deaths: 2, id: "4", kills: -2, nickname: "Zeh"},
-          %Player{deaths: 0, id: "3", kills: 1, nickname: "Isgalamido"},
-          %Player{deaths: 2, id: "2", kills: -1, nickname: "Dono da Bola"}
-        ],
-        total_kills: 4
-      },
-      %Game{
-        players: [
-          %Player{deaths: 1, id: "3", kills: 0, nickname: "Mocinha"},
-          %Player{deaths: 10, id: "2", kills: -5, nickname: "Isgalamido"}
-        ],
-        total_kills: 11
-      },
-      %Game{
-        players: [
-          %Player{deaths: 0, id: "2", kills: 0, nickname: "Isgalamido"}
-        ],
-        total_kills: 0
-      }
-    ]
+             %Game{
+               players: [
+                 %Player{deaths: 2, id: "4", kills: -2, nickname: "Zeh"},
+                 %Player{deaths: 0, id: "3", kills: 1, nickname: "Isgalamido"},
+                 %Player{deaths: 2, id: "2", kills: -1, nickname: "Dono da Bola"}
+               ],
+               total_kills: 4
+             },
+             %Game{
+               players: [
+                 %Player{deaths: 1, id: "3", kills: 0, nickname: "Mocinha"},
+                 %Player{deaths: 10, id: "2", kills: -5, nickname: "Isgalamido"}
+               ],
+               total_kills: 11
+             },
+             %Game{
+               players: [
+                 %Player{deaths: 0, id: "2", kills: 0, nickname: "Isgalamido"}
+               ],
+               total_kills: 0
+             }
+           ]
   end
 end

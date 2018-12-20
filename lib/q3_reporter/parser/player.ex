@@ -6,14 +6,16 @@ defmodule Q3Reporter.Parser.Player do
   def connect(players, id) do
     case Enum.find(players, fn player -> player.id == id end) do
       nil ->
-        new_player = %Player{ id: id }
-      [new_player | players]
-      _player -> players
+        new_player = %Player{id: id}
+        [new_player | players]
+
+      _player ->
+        players
     end
   end
 
   def update(players, id, fun) do
-    Enum.map(players, fn (player) ->
+    Enum.map(players, fn player ->
       if player.id == id, do: fun.(player), else: player
     end)
   end
