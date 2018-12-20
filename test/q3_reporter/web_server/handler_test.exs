@@ -64,17 +64,10 @@ defmodule Q3Reporter.WebServer.HandlerTest do
 
     response = Handler.handle(request, @result)
 
-    assert response == """
-           HTTP/1.1 200 OK\r
-           Content-Type: text/html\r
-           Content-Length: 90\r
-           \r
-           <ul>
-             <li>Mocinha => 8</li>
-             <li>Dono da Bola => 7</li>
-             <li>Isgalamido => 2</li>
-           </ul>
-           """
+    assert status(response) == 200
+
+    ["Mocinha => 8", "Dono da Bola => 7", "Isgalamido => 2"]
+    |> Enum.each(&assert_contains(response, &1))
   end
 
   test "GET /summary" do
@@ -88,32 +81,20 @@ defmodule Q3Reporter.WebServer.HandlerTest do
 
     response = Handler.handle(request, @result)
 
-    assert response == """
-           HTTP/1.1 200 OK\r
-           Content-Type: text/html\r
-           Content-Length: 446\r
-           \r
-           <ul>
-             <li>
-               <h3>Game 2</h3>
-               <p>Total Kills: 12</p>
-               <ul>
-                 <li>Isgalamido: 0 kills / 4 deaths</li>
-                 <li>Dono da Bola: 4 kills / 4 deaths</li>
-                 <li>Mocinha: 9 kills / 0 deaths</li>
-               </ul>
-             </li>
-             <li>
-               <h3>Game 1</h3>
-               <p>Total Kills: 4</p>
-               <ul>
-                 <li>Isgalamido: 2 kills / 4 deaths</li>
-                 <li>Dono da Bola: 3 kills / 4 deaths</li>
-                 <li>Mocinha: -1 kills / 5 deaths</li>
-               </ul>
-             </li>
-           </ul>
-           """
+    assert status(response) == 200
+
+    ["Game 1", "Game 2"]
+    |> Enum.each(&assert_contains(response, &1))
+
+    ["Isgalamido: 0 kills / 4 deaths",
+    "Dono da Bola: 4 kills / 4 deaths",
+    "Mocinha: 9 kills / 0 deaths"]
+    |> Enum.each(&assert_contains(response, &1))
+
+    ["Isgalamido: 2 kills / 4 deaths",
+    "Dono da Bola: 3 kills / 4 deaths",
+    "Mocinha: -1 kills / 5 deaths"]
+    |> Enum.each(&assert_contains(response, &1))
   end
 
   test "GET /" do
@@ -155,5 +136,16 @@ defmodule Q3Reporter.WebServer.HandlerTest do
            \r
            Not Found
            """
+  end
+
+  defp status(response) do
+    [first_line | _rest] = String.split(response, "\r\n")
+    [_version, status, _] = String.split(first_line, " ", parts: 3)
+
+    String.to_integer(status)
+  end
+
+  defp assert_contains(string, content) do
+    assert String.contains?(string, content), "#{string} does not contais #{content}"
   end
 end

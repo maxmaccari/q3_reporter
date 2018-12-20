@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Games Summaries</title>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="/ranking">Ranking</a></li>
+      <li>Summary</li>
+    </ul>
+  </nav>
+
+  <h1>Games Summaries</h1>
+
+  <ul>
+    <%= for game <- games do %>
+      <li>
+        <h3>Game <%= game.id %></h3>
+        <p>Total Kills: <%= game.total_kills %></p>
+        <ul>
+        <%= for player <- game.players do %>
+          <li><%= "#{player.nickname}: #{player.kills} kills / #{player.deaths} deaths" %></li>
+        <% end %>
+        </ul>
+      </li>
+    <% end %>
+  </ul>
+</body>
+</html>

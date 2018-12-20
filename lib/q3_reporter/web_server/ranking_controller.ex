@@ -4,13 +4,9 @@ defmodule Q3Reporter.WebServer.RankingController do
   import Q3Reporter.WebServer.Controller
 
   def index(conv, result) do
-    ranking =
-      result
-      |> Ranking.build()
-      |> Enum.map(fn {nickname, kills} -> "  <li>#{nickname} => #{kills}</li>" end)
-      |> Enum.join("\n")
+    ranking = Ranking.build(result)
 
-    body = "<ul>\n#{ranking}\n</ul>"
+    body = EEx.eval_file("templates/ranking_index.html.eex", ranking: ranking)
 
     send_resp(conv, body)
   end
