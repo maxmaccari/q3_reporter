@@ -7,7 +7,7 @@ defmodule Q3Reporter.WebServer.Controller do
     new_path = Path.join(@host, path)
     resp_headers = Map.put(resp_headers, "Location", new_path)
 
-    %{conv | status: 301, resp_headers: resp_headers}
+    %{conv | status: 307, resp_headers: resp_headers}
   end
 
   def send_resp(conv, status, body) do

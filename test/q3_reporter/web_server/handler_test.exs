@@ -109,7 +109,7 @@ defmodule Q3Reporter.WebServer.HandlerTest do
     response = Handler.handle(request, @result)
 
     assert response == """
-           HTTP/1.1 301 Moved Permanently\r
+           HTTP/1.1 307 Temporary Redirect\r
            Location: http://localhost:8080/ranking\r
            Content-Type: text/html\r
            Content-Length: 0\r

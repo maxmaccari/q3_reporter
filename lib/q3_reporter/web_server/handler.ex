@@ -28,7 +28,7 @@ defmodule Q3Reporter.WebServer.Handler do
   defp status_desc(status) do
     %{
       200 => "OK",
-      301 => "Moved Permanently",
+      307 => "Temporary Redirect",
       404 => "Not Found"
     }[status]
   end
