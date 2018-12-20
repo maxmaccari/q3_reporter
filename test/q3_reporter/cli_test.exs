@@ -7,7 +7,15 @@ defmodule Q3Reporter.CliTest do
   test "try to parse without specify parameters" do
     assert capture_io(fn ->
              Q3Reporter.Cli.main()
-           end) == "usage: q3_reporter [filename]\n\n"
+           end) ==
+             """
+             usage: q3_reporter [options] <filename>
+
+             Options:
+               --ranking => Output ranking instead summary
+               --json => Output result as json
+               --web => Start a webserver with ranking and game summary\n
+             """
   end
 
   test "try to parse inexistent file" do

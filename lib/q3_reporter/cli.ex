@@ -25,7 +25,12 @@ defmodule Q3Reporter.Cli do
 
   defp parse_args([]) do
     message = """
-    usage: q3_reporter [filename]
+    usage: q3_reporter [options] <filename>
+
+    Options:
+      --ranking => Output ranking instead summary
+      --json => Output result as json
+      --web => Start a webserver with ranking and game summary
     """
 
     {:error, message}

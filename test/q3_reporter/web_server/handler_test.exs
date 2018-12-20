@@ -86,14 +86,18 @@ defmodule Q3Reporter.WebServer.HandlerTest do
     ["Game 1", "Game 2"]
     |> Enum.each(&assert_contains(response, &1))
 
-    ["Isgalamido: 0 kills / 4 deaths",
-    "Dono da Bola: 4 kills / 4 deaths",
-    "Mocinha: 9 kills / 0 deaths"]
+    [
+      "Isgalamido: 0 kills / 4 deaths",
+      "Dono da Bola: 4 kills / 4 deaths",
+      "Mocinha: 9 kills / 0 deaths"
+    ]
     |> Enum.each(&assert_contains(response, &1))
 
-    ["Isgalamido: 2 kills / 4 deaths",
-    "Dono da Bola: 3 kills / 4 deaths",
-    "Mocinha: -1 kills / 5 deaths"]
+    [
+      "Isgalamido: 2 kills / 4 deaths",
+      "Dono da Bola: 3 kills / 4 deaths",
+      "Mocinha: -1 kills / 5 deaths"
+    ]
     |> Enum.each(&assert_contains(response, &1))
   end
 

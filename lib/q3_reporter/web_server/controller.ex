@@ -22,7 +22,6 @@ defmodule Q3Reporter.WebServer.Controller do
 
   def render(conv, template, bindings) do
     template = Path.join(@templates_path, "#{template}.html.eex")
-    |> IO.inspect()
     body = EEx.eval_file(template, bindings)
 
     send_resp(conv, body)

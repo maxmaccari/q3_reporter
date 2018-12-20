@@ -9,5 +9,5 @@
 ## Options
 
 `--ranking` => Output ranking instead summary
-`--json` => Output in json format
-`--web` => Shows a webserver with ranking and game summary
+`--json` => Output result as json
+`--web` => Start a webserver with ranking and game summary
