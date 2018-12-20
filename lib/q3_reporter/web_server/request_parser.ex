@@ -5,6 +5,6 @@ defmodule Q3Reporter.WebServer.RequestParser do
     [first_line | _rest] = String.split(request, "\r\n")
     [method, path, _http_version] = String.split(first_line)
 
-    %Conv{method: method, path: path, status: 200}
+    %Conv{method: method, path: path}
   end
 end
