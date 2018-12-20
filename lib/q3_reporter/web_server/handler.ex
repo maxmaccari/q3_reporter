@@ -57,7 +57,7 @@ defmodule Q3Reporter.WebServer.Handler do
   end
 
   defp route(conv, _result) do
-    conv
+    %{conv | status: 404, body: "Not Found"}
   end
 
   defp parse_params(request) do
@@ -88,7 +88,8 @@ defmodule Q3Reporter.WebServer.Handler do
   defp status_desc(status) do
     %{
       200 => "OK",
-      301 => "Moved Permanently"
+      301 => "Moved Permanently",
+      404 => "Not Found"
     }[status]
   end
 end
