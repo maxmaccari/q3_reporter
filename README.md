@@ -1,21 +1,13 @@
 # Q3Reporter
 
-**TODO: Add description**
+**Generate a report base on a Quake 3 log**
 
-## Installation
+## Usage
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `q3_reporter` to your list of dependencies in `mix.exs`:
+`q3reporter [options] <filename>`
 
-```elixir
-def deps do
-  [
-    {:q3_reporter, "~> 0.1.0"}
-  ]
-end
-```
+## Options
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/q3_reporter](https://hexdocs.pm/q3_reporter).
-
+`--ranking` => Output ranking instead summary
+`--json` => Output in json format
+`--web` => Shows a webserver with ranking and game summary
