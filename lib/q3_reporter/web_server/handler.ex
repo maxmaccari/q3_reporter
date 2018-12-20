@@ -50,6 +50,12 @@ defmodule Q3Reporter.WebServer.Handler do
     %{conv | body: body}
   end
 
+  defp route(%{method: "GET", path: "/", resp_headers: resp_headers} = conv, _result) do
+    resp_headers = Map.put(resp_headers, "Location", "http://localhost:8080/ranking")
+
+    %{conv | status: 301, resp_headers: resp_headers}
+  end
+
   defp route(conv, _result) do
     conv
   end
@@ -58,16 +64,31 @@ defmodule Q3Reporter.WebServer.Handler do
     [first_line | _rest] = String.split(request, "\r\n")
     [method, path, _http_version] = String.split(first_line)
 
-    %{method: method, path: path, body: ""}
+    %{method: method, path: path, body: "", status: 200, resp_headers: %{}}
   end
 
-  defp make_response(conv) do
+  defp make_response(%{resp_headers: resp_headers} = conv) do
+    headers =
+      resp_headers
+      |> Enum.map(fn {key, value} -> "#{key}: #{value}\r\n" end)
+      |> Enum.join()
+
+    headers = headers <>
+      "Content-Type: text/html\r\n" <>
+      "Content-Length: #{String.length(conv.body)}\r"
+
     """
-    HTTP/1.1 200 OK\r
-    Content-Type: text/html\r
-    Content-Length: #{String.length(conv.body)}\r
+    HTTP/1.1 #{conv.status} #{status_desc(conv.status)}\r
+    #{headers}
     \r
     #{conv.body}
     """
+  end
+
+  defp status_desc(status) do
+    %{
+      200 => "OK",
+      301 => "Moved Permanently"
+    }[status]
   end
 end

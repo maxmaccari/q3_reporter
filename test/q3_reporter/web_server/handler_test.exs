@@ -116,4 +116,25 @@ defmodule Q3Reporter.WebServer.HandlerTest do
     </ul>
     """
   end
+
+  test "GET /" do
+    request = """
+    GET / HTTP/1.1\r
+    Host: example.com\r
+    User-Agent: ExampleBrowser/1.0\r
+    Accept: */*\r
+    \r
+    """
+
+    response = Handler.handle(request, @result)
+
+    assert response == """
+    HTTP/1.1 301 Moved Permanently\r
+    Location: http://localhost:8080/ranking\r
+    Content-Type: text/html\r
+    Content-Length: 0\r
+    \r
+
+    """
+  end
 end
