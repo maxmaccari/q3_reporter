@@ -31,16 +31,20 @@ defmodule Q3Reporter.WebServer do
   end
 
   defp receive_request(client_socket) do
-    {:ok, request} = :gen_tcp.recv(client_socket, 0)
+    case :gen_tcp.recv(client_socket, 0) do
+      {:ok, request} ->
+        IO.puts "➡️  Received request:\n"
 
-    IO.puts "➡️  Received request:\n"
-
-    {client_socket, request}
+        {client_socket, request}
+      {:error, :closed} -> :error
+    end
   end
 
   defp handle_request({client_socket, request}, result) do
     {client_socket, Handler.handle(request, result)}
   end
+
+  defp handle_request(:error, _result), do: :error
 
   defp send_response({client_socket, response}) do
     :ok = :gen_tcp.send(client_socket, response)
@@ -48,4 +52,6 @@ defmodule Q3Reporter.WebServer do
 
     :ok = :gen_tcp.close(client_socket)
   end
+
+  defp send_response(:error), do: :error
 end
