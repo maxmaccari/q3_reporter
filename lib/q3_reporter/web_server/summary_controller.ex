@@ -1,4 +1,6 @@
 defmodule Q3Reporter.WebServer.SummaryController do
+  import Q3Reporter.WebServer.Controller
+
   def index(conv, result) do
     games =
       result
@@ -27,6 +29,6 @@ defmodule Q3Reporter.WebServer.SummaryController do
 
     body = "<ul>\n#{games}</ul>"
 
-    %{conv | status: 200, body: body}
+    send_resp(conv, body)
   end
 end

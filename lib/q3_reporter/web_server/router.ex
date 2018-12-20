@@ -1,5 +1,5 @@
 defmodule Q3Reporter.WebServer.Router do
-  alias Q3Reporter.WebServer.{Conv, RankingController, SummaryController}
+  alias Q3Reporter.WebServer.{Conv, Controller, RankingController, SummaryController}
 
   def route(%Conv{method: "GET", path: "/ranking"} = conv, result) do
     RankingController.index(conv, result)
@@ -9,13 +9,11 @@ defmodule Q3Reporter.WebServer.Router do
     SummaryController.index(conv, result)
   end
 
-  def route(%Conv{method: "GET", path: "/", resp_headers: resp_headers} = conv, _result) do
-    resp_headers = Map.put(resp_headers, "Location", "http://localhost:8080/ranking")
-
-    %{conv | status: 301, resp_headers: resp_headers}
+  def route(%Conv{method: "GET", path: "/"} = conv, _result) do
+    Controller.send_redirect(conv, "/ranking")
   end
 
   def route(conv, _result) do
-    %{conv | status: 404, body: "Not Found"}
+    Controller.send_resp(conv, 404, "Not Found")
   end
 end

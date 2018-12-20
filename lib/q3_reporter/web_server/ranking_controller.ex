@@ -1,6 +1,8 @@
 defmodule Q3Reporter.WebServer.RankingController do
   alias Q3Reporter.Ranking
 
+  import Q3Reporter.WebServer.Controller
+
   def index(conv, result) do
     ranking =
       result
@@ -10,6 +12,6 @@ defmodule Q3Reporter.WebServer.RankingController do
 
     body = "<ul>\n#{ranking}\n</ul>"
 
-    %{conv | status: 200, body: body}
+    send_resp(conv, body)
   end
 end
