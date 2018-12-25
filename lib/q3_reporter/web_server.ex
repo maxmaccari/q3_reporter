@@ -3,14 +3,15 @@ defmodule Q3Reporter.WebServer do
 
   require Logger
 
-  @port 8080
   def start(result) do
+    port = (System.get_env("PORT") || "8080") |> String.to_integer()
+
     options = [:binary, backlog: 10, packet: :raw, active: false, reuseaddr: true]
 
     {:ok, listen_socket} =
-      :gen_tcp.listen(@port, options)
+      :gen_tcp.listen(port, options)
 
-    IO.puts("\n🎧  Listening for connection requests on port #{@port}...\n")
+    IO.puts("\n🎧  Listening for connection requests on port #{port}...\n")
 
     accept_loop(listen_socket, result)
   end
