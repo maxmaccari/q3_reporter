@@ -1,18 +1,19 @@
 defmodule Q3Reporter.Supervisor do
   use Supervisor
 
-  alias Q3Reporter.{ResultServer, WebServerMonitor}
+  alias Q3Reporter.{ResultServer, WebServerMonitor, UpdaterServer}
 
-  def start_link(result) do
-    Supervisor.start_link(__MODULE__, result, name: __MODULE__)
+  def start_link([result, path]) do
+    Supervisor.start_link(__MODULE__, [result, path], name: __MODULE__)
   end
 
-  def init(result) do
+  def init([result, path]) do
     children = [
       {ResultServer, result},
-      WebServerMonitor
+      WebServerMonitor,
+      {UpdaterServer, path}
     ]
 
-    Supervisor.init(children, strategy: :one_for_one)
+    Supervisor.init(children, strategy: :rest_for_one)
   end
 end

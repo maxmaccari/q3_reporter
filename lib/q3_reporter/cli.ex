@@ -77,8 +77,8 @@ defmodule Q3Reporter.Cli do
 
   defp parse(error), do: error
 
-  defp print_result({:ok, %{web: true}, result}) do
-    Supervisor.start_link(result)
+  defp print_result({:ok, %{web: true, filename: path}, result}) do
+    Supervisor.start_link([result, path])
   end
 
   defp print_result({:ok, opts, result}) do
