@@ -1,40 +1,35 @@
 defmodule Q3Reporter.WebServerMonitor do
+  use GenServer
+
   @name :web_server_monitor
 
-  def start(result) do
-    pid = spawn(fn ->
-      server_pid = start_server(result)
-      Process.flag(:trap_exit, true)
+  # Client
 
-      listen_loop({server_pid, result})
-    end)
-    Process.register(pid, @name)
-
-    pid
+  def start_link(results) do
+    GenServer.start_link(__MODULE__, results, name: @name)
   end
 
-  def get_server(pid) do
-    send(pid, {:get_server, self()})
-
-    receive do
-      {:server_pid, server_pid} ->
-        server_pid
-    end
+  def get_server() do
+    GenServer.call(@name, :get_server)
   end
 
-  def listen_loop({server_pid, result}) do
-    receive do
-      {:get_server, sender} ->
-        send(sender, {:server_pid, server_pid})
+  # Server
 
-        listen_loop({server_pid, result})
-      {:EXIT, ^server_pid, _reason} ->
-        server_pid = start_server(result)
+  def init(results) do
+    server_pid = start_server(results)
+    Process.flag(:trap_exit, true)
 
-        listen_loop({server_pid, result})
-      _ ->
-        listen_loop({server_pid, result})
-    end
+    {:ok, {server_pid, results}}
+  end
+
+  def handle_call(:get_server, _from, {server_pid, _results} = state) do
+    {:reply, server_pid, state}
+  end
+
+  def handle_info({:EXIT, _pid, _reason},  {_server_pid, results}) do
+    server_pid = start_server(results)
+
+    {:noreply, {server_pid, results}}
   end
 
   defp start_server(result) do
