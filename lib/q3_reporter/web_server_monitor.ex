@@ -1,8 +1,6 @@
 defmodule Q3Reporter.WebServerMonitor do
   use GenServer
 
-  alias Q3Reporter.ResultServer
-
   @name :web_server_monitor
 
   # Client
@@ -35,9 +33,7 @@ defmodule Q3Reporter.WebServerMonitor do
   end
 
   defp start_server() do
-    result = ResultServer.get_result()
-
-    server_pid = spawn_link(Q3Reporter.WebServer, :start, [result])
+    server_pid = spawn_link(Q3Reporter.WebServer, :start, [])
     Process.register(server_pid, :web_server)
 
     server_pid

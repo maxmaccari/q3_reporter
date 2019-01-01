@@ -3,7 +3,7 @@ defmodule Q3Reporter.WebServer do
 
   require Logger
 
-  def start(result) do
+  def start() do
     port = (System.get_env("PORT") || "8080") |> String.to_integer()
 
     options = [:binary, backlog: 10, packet: :raw, active: false, reuseaddr: true]
@@ -13,19 +13,19 @@ defmodule Q3Reporter.WebServer do
 
     IO.puts("\n🎧  Listening for connection requests on port #{port}...\n")
 
-    accept_loop(listen_socket, result)
+    accept_loop(listen_socket)
   end
 
-  def accept_loop(listen_socket, result) do
+  def accept_loop(listen_socket) do
     Logger.debug("⌛  Waiting to accept a client connection...\n")
 
     client_socket = accept(listen_socket)
 
-    pid = spawn fn -> serve(client_socket, result) end
+    pid = spawn fn -> serve(client_socket) end
 
     :ok = :gen_tcp.controlling_process(client_socket, pid)
 
-    accept_loop(listen_socket, result)
+    accept_loop(listen_socket)
   end
 
   defp accept(listen_socket) do
@@ -36,7 +36,9 @@ defmodule Q3Reporter.WebServer do
     client_socket
   end
 
-  defp serve(client_socket, result) do
+  defp serve(client_socket) do
+    result = Q3Reporter.ResultServer.get_result()
+
     client_socket
       |> receive_request()
       |> handle_request(result)
