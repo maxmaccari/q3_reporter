@@ -23,7 +23,7 @@ defmodule Q3Reporter.WebServer do
 
     pid = spawn fn -> serve(client_socket, result) end
 
-    :gen_tcp.controlling_process(client_socket, pid)
+    :ok = :gen_tcp.controlling_process(client_socket, pid)
 
     accept_loop(listen_socket, result)
   end

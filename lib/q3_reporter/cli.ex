@@ -3,7 +3,7 @@ defmodule Q3Reporter.Cli do
   Cli that read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.{Parser, ResultPrinter, WebServer}
+  alias Q3Reporter.{Parser, ResultPrinter, WebServerMonitor}
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -78,7 +78,7 @@ defmodule Q3Reporter.Cli do
   defp parse(error), do: error
 
   defp print_result({:ok, %{web: true}, result}) do
-    WebServer.start(result)
+    WebServerMonitor.start(result)
   end
 
   defp print_result({:ok, opts, result}) do
