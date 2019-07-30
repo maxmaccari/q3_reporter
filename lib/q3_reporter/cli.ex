@@ -79,6 +79,7 @@ defmodule Q3Reporter.Cli do
 
   defp print_result({:ok, %{web: true, filename: path}, result}) do
     Supervisor.start_link([result, path])
+    Process.sleep(:infinity)
   end
 
   defp print_result({:ok, opts, result}) do
