@@ -56,7 +56,7 @@ defmodule Q3Reporter.Core.LogInterpreterTest do
  20:37 ShutdownGame:
       ]
 
-      assert [%Game{}, %Game{}] = LogInterpreter.interpret(log)
+      assert [%Game{}, %Game{}] = LogInterpreter.interpret(games, log)
     end
   end
 end
