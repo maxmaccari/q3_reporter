@@ -8,7 +8,7 @@ defmodule Q3Reporter.Core.GameTest do
     end
 
     test "new/1 create a Game with and default values" do
-      assert %Game{players: [], initialized_at: nil, shutdown_at: nil} = Game.new()
+      assert %Game{players: %{}, initialized_at: nil, shutdown_at: nil} = Game.new()
     end
 
     test "initialize/1 set game initialize at the given time", %{game: game} do
@@ -29,14 +29,14 @@ defmodule Q3Reporter.Core.GameTest do
       player = build_player()
       game = Game.add_player(game, player)
 
-      assert game.players == [player]
+      assert game.players == players_set([player])
     end
 
     test "add_player/2 doesn't add a new player if it is already added", %{game: game} do
       player = build_player()
       game = game |> Game.add_player(player) |> Game.add_player(player)
 
-      assert game.players == [player]
+      assert game.players == players_set([player])
     end
 
     test "add_player/2 add players with different ids", %{game: game} do
@@ -44,10 +44,10 @@ defmodule Q3Reporter.Core.GameTest do
       player2 = build_player(2)
       game = game |> Game.add_player(player1) |> Game.add_player(player2)
 
-      assert length(game.players) == 2
+      assert Enum.count(game.players) == 2
 
       Enum.each([player2, player1], fn player ->
-        assert player in game.players
+        assert player == player_from(game, player.id)
       end)
     end
 
@@ -60,7 +60,7 @@ defmodule Q3Reporter.Core.GameTest do
         |> Game.add_player(player)
         |> Game.change_player_nickname(player.id, new_nickname)
 
-      assert [%Player{nickname: ^new_nickname}] = game.players
+      assert %Player{nickname: ^new_nickname} = player_from(game, player.id)
     end
 
     test "connect_player/1 change the player connected status to true", %{game: game} do
@@ -71,19 +71,19 @@ defmodule Q3Reporter.Core.GameTest do
         |> Game.add_player(player)
         |> Game.connect_player(player.id)
 
-      assert [%Player{connected?: true}] = game.players
+      assert %Player{connected?: true} = player_from(game, player.id)
     end
 
     test "disconnect_player/1 change the player connected status to false", %{game: game} do
-      player1 = build_player(1)
+      player = build_player(1)
 
       game =
         game
-        |> Game.add_player(player1)
-        |> Game.connect_player(player1.id)
-        |> Game.disconnect_player(player1.id)
+        |> Game.add_player(player)
+        |> Game.connect_player(player.id)
+        |> Game.disconnect_player(player.id)
 
-      assert [%Player{connected?: false}] = game.players
+      assert %Player{connected?: false} = player_from(game, player.id)
     end
 
     test "kill_player/2 increment the killer kills and increment the killed deaths", %{game: game} do
@@ -177,7 +177,46 @@ defmodule Q3Reporter.Core.GameTest do
 
       assert Game.status(shutdown_game) == :shutdown
     end
+
+    test "list_players/1 return a list of players", %{game: game} do
+      player1 = build_player(1)
+      player2 = build_player(2)
+      player3 = build_player(3)
+
+      game =
+        game
+        |> Game.add_player(player1)
+        |> Game.add_player(player2)
+        |> Game.add_player(player3)
+
+      list = Game.list_players(game)
+      assert length(list) == 3
+
+      Enum.each([player1, player2, player3], fn player ->
+        assert player in list
+      end)
+    end
+
+    test "players_count/1 takes the count of players", %{game: game} do
+      game =
+        game
+        |> Game.add_player(build_player(1))
+        |> Game.add_player(build_player(1))
+        |> Game.add_player(build_player(2))
+        |> Game.add_player(build_player(3))
+
+      assert Game.players_count(game) == 3
+    end
+
+    test "player_exist?/2 tell if player exist or don't", %{game: game} do
+      game = Game.add_player(game, build_player(1))
+
+      assert Game.player_exist?(game, 1)
+      refute Game.player_exist?(game, 2)
+    end
   end
+
+  # Helpers
 
   defp assert_total_kills_by(game, number) do
     assert Game.total_kills(game) == number
@@ -196,6 +235,10 @@ defmodule Q3Reporter.Core.GameTest do
   end
 
   defp player_from(game, id) do
-    Enum.find(game.players, &(&1.id == id))
+    game.players[id]
+  end
+
+  def players_set(players) do
+    for player <- players, into: %{}, do: {player.id, player}
   end
 end

@@ -1,12 +1,12 @@
 defmodule Q3Reporter.Core.Game do
   alias Q3Reporter.Core.Player
 
-  defstruct players: [],
+  defstruct players: %{},
             initialized_at: nil,
             shutdown_at: nil
 
   @type t :: %__MODULE__{
-          players: list(Player.t())
+          players: %{String.t() => Player.t()}
         }
 
   @spec new() :: t()
@@ -26,15 +26,7 @@ defmodule Q3Reporter.Core.Game do
 
   @spec add_player(t(), Player.t()) :: t()
   def add_player(%__MODULE__{players: players} = game, %Player{} = player) do
-    %{game | players: add_if_not_added(players, player)}
-  end
-
-  defp add_if_not_added(players, player) do
-    if Enum.any?(players, &(&1.id === player.id)) do
-      players
-    else
-      [player | players]
-    end
+    %{game | players: Map.put_new(players, player.id, player)}
   end
 
   @spec change_player_nickname(t(), Player.id(), String.t()) :: t()
@@ -68,7 +60,7 @@ defmodule Q3Reporter.Core.Game do
   end
 
   defp maybe_kill_player(players, killer_id, killed_id) do
-    if player_exist?(players, killer_id) && player_exist?(players, killed_id) do
+    if can_kill?(players, killer_id, killed_id) do
       players
       |> update_player(killer_id, &Player.increment_kills/1)
       |> update_player(killed_id, &Player.increment_deaths/1)
@@ -77,18 +69,19 @@ defmodule Q3Reporter.Core.Game do
     end
   end
 
-  defp player_exist?(players, player_id), do: Enum.any?(players, &(&1.id === player_id))
+  defp can_kill?(players, player1_id, player2_id) do
+    Map.has_key?(players, player1_id) && Map.has_key?(players, player2_id) &&
+      player1_id !== player2_id
+  end
 
   defp update_player(players, player_id, fun) do
-    Enum.map(players, fn
-      %{id: ^player_id} = player -> fun.(player)
-      player -> player
-    end)
+    Map.replace(players, player_id, fun.(players[player_id]))
   end
 
   @spec total_kills(t()) :: integer()
-  def total_kills(%__MODULE__{players: players}) do
-    players
+  def total_kills(%__MODULE__{} = game) do
+    game
+    |> list_players()
     |> Enum.map(& &1.kills)
     |> Enum.sum()
   end
@@ -97,4 +90,14 @@ defmodule Q3Reporter.Core.Game do
   def status(%__MODULE__{initialized_at: nil, shutdown_at: nil}), do: :created
   def status(%__MODULE__{shutdown_at: nil}), do: :initialized
   def status(%__MODULE__{}), do: :shutdown
+
+  @spec list_players(t()) :: list(Player.t())
+  def list_players(%__MODULE__{players: players}), do: Map.values(players)
+
+  @spec players_count(t()) :: integer
+  def players_count(%__MODULE__{players: players}), do: Enum.count(players)
+
+  @spec player_exist?(Q3Reporter.Core.Game.t(), Player.id()) :: boolean
+  def player_exist?(%__MODULE__{players: players}, player_id),
+    do: Map.has_key?(players, player_id)
 end

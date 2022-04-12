@@ -1,7 +1,7 @@
 defmodule Q3Reporter.Core.LogInterpreterTest do
   use ExUnit.Case
 
-  alias Q3Reporter.Core.{LogInterpreter, Game, Player}
+  alias Q3Reporter.Core.{LogInterpreter, Game}
 
   describe "LogInterpreter.interpret/1" do
     test "one game no players" do
@@ -10,7 +10,8 @@ defmodule Q3Reporter.Core.LogInterpreterTest do
  20:37 ShutdownGame:
       ]
 
-      assert [%Game{players: []}] = LogInterpreter.interpret(log)
+      assert [%Game{} = game] = LogInterpreter.interpret(log)
+      assert Enum.empty?(game.players)
     end
 
     test "one game two players" do
@@ -32,7 +33,8 @@ defmodule Q3Reporter.Core.LogInterpreterTest do
  20:37 ShutdownGame:
       ]
 
-      assert [%Game{players: [%Player{}, %Player{}]}] = LogInterpreter.interpret(log)
+      assert [%Game{} = game] = LogInterpreter.interpret(log)
+      assert Game.players_count(game) == 2
     end
 
     test "multiple games" do
