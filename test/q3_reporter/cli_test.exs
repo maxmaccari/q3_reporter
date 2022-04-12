@@ -5,7 +5,7 @@ defmodule Q3Reporter.CliTest do
   # doctest Q3Reporter
 
   test "try to parse without specify parameters" do
-    assert capture_io(fn ->
+    assert capture_io(:stderr, fn ->
              Q3Reporter.Cli.main()
            end) ==
              """
@@ -19,7 +19,7 @@ defmodule Q3Reporter.CliTest do
   end
 
   test "try to parse inexistent file" do
-    assert capture_io(fn ->
+    assert capture_io(:stderr, fn ->
              Q3Reporter.Cli.main(["noexists"])
            end) == "'noexists' not found...\n"
   end

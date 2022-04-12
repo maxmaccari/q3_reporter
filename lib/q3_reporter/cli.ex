@@ -15,12 +15,14 @@ defmodule Q3Reporter.Cli do
 
   """
   def main(args \\ []) do
-    args
-    |> parse_args
-    |> open_file
-    |> read_file
-    |> parse
-    |> print_result
+    with {:ok, opts} <- parse_args(args),
+         {:ok, log} <- read_log(opts.filename) do
+      log
+      |> Parser.parse()
+      |> print_result(opts)
+    else
+      {:error, message} -> IO.puts(:stderr, message)
+    end
   end
 
   defp parse_args([]) do
@@ -38,7 +40,7 @@ defmodule Q3Reporter.Cli do
 
   @permitted_args [json: :boolean, ranking: :boolean, web: :boolean]
   defp parse_args(args) do
-    {opts, filename, _} = OptionParser.parse(args, strict: @permitted_args)
+    {opts, [filename], _} = OptionParser.parse(args, strict: @permitted_args)
 
     opts = %{
       json: Keyword.get(opts, :json, false),
@@ -50,43 +52,22 @@ defmodule Q3Reporter.Cli do
     {:ok, opts}
   end
 
-  defp open_file({:ok, %{filename: filepath} = opts}) do
-    case File.open(filepath, [:read]) do
-      {:ok, file} -> {:ok, opts, file}
-      {:error, :enoent} -> {:error, "'#{filepath}' not found..."}
-      {:error, _} -> {:error, "Error trying to open '#{filepath}'"}
+  defp read_log(path) do
+    case File.read(path) do
+      {:ok, log} -> {:ok, log}
+      {:error, :enoent} -> {:error, "'#{path}' not found..."}
+      {:error, :eacces} -> {:error, "You don't have permission to open '#{path}..."}
+      {:error, :enomem} -> {:error, "There's not enough memory to open '#{path}..."}
+      {:error, _} -> {:error, "Error trying to open '#{path}'"}
     end
   end
 
-  defp open_file(error), do: error
-
-  defp read_file({:ok, opts, file}) do
-    content = IO.read(file, :all)
-    :ok = File.close(file)
-
-    {:ok, opts, content}
-  end
-
-  defp read_file(error), do: error
-
-  defp parse({:ok, opts, content}) do
-    result = Parser.parse(content)
-
-    {:ok, opts, result}
-  end
-
-  defp parse(error), do: error
-
-  defp print_result({:ok, %{web: true, filename: path}, result}) do
+  defp print_result(result, %{web: true, filename: path}) do
     Supervisor.start_link([result, path])
     Process.sleep(:infinity)
   end
 
-  defp print_result({:ok, opts, result}) do
+  defp print_result(result, opts) do
     ResultPrinter.print(opts, result)
-  end
-
-  defp print_result({:error, message}) do
-    IO.puts(message)
   end
 end
