@@ -128,6 +128,19 @@ defmodule Q3Reporter.Core.GameTest do
       assert player_from(game, player.id).deaths == 1
     end
 
+    test "kill_player/2 doesn't change nothing if player don't exist",
+         %{game: game} do
+      player = build_player(1)
+
+      game =
+        game
+        |> Game.add_player(player)
+        |> Game.kill_player(player.id, player.id + 1)
+
+      assert player_from(game, player.id).kills == 0
+      assert player_from(game, player.id).deaths == 0
+    end
+
     test "total_kills/2 get the total of kills from the game",
          %{game: game} do
       player1 = build_player(1)
@@ -147,6 +160,22 @@ defmodule Q3Reporter.Core.GameTest do
       |> assert_total_kills_by(2)
       |> Game.kill_player(player1.id, player2.id)
       |> assert_total_kills_by(3)
+    end
+
+    test "status/1 get :created if the game is not initialized", %{game: game} do
+      assert Game.status(game) == :created
+    end
+
+    test "status/1 get :initialized if the game is initialized", %{game: game} do
+      initialized_game = game |> Game.initialize(random_time())
+
+      assert Game.status(initialized_game) == :initialized
+    end
+
+    test "status/1 get :shutdown if the game is initialized and shutdown", %{game: game} do
+      shutdown_game = game |> Game.initialize(random_time()) |> Game.shutdown(random_time())
+
+      assert Game.status(shutdown_game) == :shutdown
     end
   end
 
