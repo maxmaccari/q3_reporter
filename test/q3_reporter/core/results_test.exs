@@ -5,7 +5,7 @@ defmodule Q3Reporter.Core.ResultsTest do
 
   describe "Results.by_game/1" do
     test "with empty games list" do
-      assert Results.by_game([]) == %Results{type: :by_game}
+      assert Results.by_game([]) == %Results{mode: :by_game}
     end
 
     test "with games list without players" do
@@ -89,7 +89,7 @@ defmodule Q3Reporter.Core.ResultsTest do
 
   describe "Results.general/1" do
     test "with empty games list" do
-      assert Results.general([]) == %Results{type: :general}
+      assert Results.general([]) == %Results{mode: :ranking}
     end
 
     test "with games list without players" do
@@ -154,19 +154,19 @@ defmodule Q3Reporter.Core.ResultsTest do
                  "player1: 5 kills / 0 deaths"
     end
 
-    test "when type is :by_game with no game" do
+    test "when mode is :by_game with no game" do
       ranking = Results.by_game([])
 
       assert to_string(ranking) == "# No Games :( #"
     end
 
-    test "when type is :by_game with one game and no players" do
+    test "when mode is :by_game with one game and no players" do
       ranking = Results.by_game([Game.new()])
 
       assert to_string(ranking) == "# Game 1 #\n--- Empty ---\nTotal Kills: 0"
     end
 
-    test "when type is :by_game with one game" do
+    test "when mode is :by_game with one game" do
       player1 = Player.new(1, "player1") |> with_stats(5, 0)
       player2 = Player.new(2, "player2") |> with_stats(10, 5)
 
@@ -180,7 +180,7 @@ defmodule Q3Reporter.Core.ResultsTest do
                  "Total Kills: 15"
     end
 
-    test "when type is :by_game with multiple games" do
+    test "when mode is :by_game with multiple games" do
       player1 = Player.new(1, "player1") |> with_stats(5, 0)
       player2 = Player.new(2, "player2") |> with_stats(10, 5)
 

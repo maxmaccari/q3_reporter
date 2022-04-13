@@ -44,7 +44,7 @@ defmodule Q3Reporter.Cli do
 
     opts = %{
       json: Keyword.get(opts, :json, false),
-      mode: if(opts[:ranking], do: :ranking, else: :games),
+      mode: if(opts[:ranking], do: :ranking, else: :by_game),
       web: Keyword.get(opts, :web, false),
       filename: filename
     }

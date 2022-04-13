@@ -1,7 +1,7 @@
 defmodule Q3Reporter.Core.Results do
   alias Q3Reporter.Core.Game
 
-  defstruct entries: [], type: nil
+  defstruct entries: [], mode: nil
 
   @type entry :: %{
           nickname: String.t(),
@@ -16,14 +16,14 @@ defmodule Q3Reporter.Core.Results do
         }
 
   @type t :: %__MODULE__{
-          type: :by_game | :general,
+          mode: :by_game | :ranking,
           entries: list(entry | game)
         }
 
-  defp new(entries, type) when type in [:by_game, :general] do
+  defp new(entries, type) when type in [:by_game, :ranking] do
     %__MODULE__{
       entries: entries,
-      type: type
+      mode: type
     }
   end
 
@@ -47,7 +47,7 @@ defmodule Q3Reporter.Core.Results do
     |> Enum.map(&Game.list_players/1)
     |> List.flatten()
     |> build_ranking()
-    |> new(:general)
+    |> new(:ranking)
   end
 
   defp build_ranking(players) do
@@ -80,13 +80,13 @@ defmodule Q3Reporter.Core.Results do
   defimpl String.Chars, for: __MODULE__ do
     alias Q3Reporter.Core.Results
 
-    def to_string(%Results{entries: entries, type: :general}) do
+    def to_string(%Results{entries: entries, mode: :ranking}) do
       "# General Ranking #\n" <> ranking_text(entries)
     end
 
-    def to_string(%Results{entries: [], type: :by_game}), do: "# No Games :( #"
+    def to_string(%Results{entries: [], mode: :by_game}), do: "# No Games :( #"
 
-    def to_string(%Results{entries: entries, type: :by_game}) do
+    def to_string(%Results{entries: entries, mode: :by_game}) do
       entries
       |> Enum.map(&"# #{&1.game} #\n#{ranking_text(&1.ranking)}\nTotal Kills: #{&1.total_kills}")
       |> Enum.join("\n\n")
