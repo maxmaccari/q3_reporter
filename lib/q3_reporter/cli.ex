@@ -3,7 +3,7 @@ defmodule Q3Reporter.Cli do
   Cli that read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.{Parser, ResultPrinter, Supervisor}
+  alias Q3Reporter.LogParser
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -15,12 +15,12 @@ defmodule Q3Reporter.Cli do
 
   """
   def main(args \\ []) do
-    args
-    |> parse_args
-    |> open_file
-    |> read_file
-    |> parse
-    |> print_result
+    with {:ok, opts} <- parse_args(args),
+         {:ok, results} <- LogParser.parse(opts.filename, mode: opts.mode) do
+      display(results, opts)
+    else
+      {:error, message} -> IO.puts(:stderr, message)
+    end
   end
 
   defp parse_args([]) do
@@ -38,11 +38,11 @@ defmodule Q3Reporter.Cli do
 
   @permitted_args [json: :boolean, ranking: :boolean, web: :boolean]
   defp parse_args(args) do
-    {opts, filename, _} = OptionParser.parse(args, strict: @permitted_args)
+    {opts, [filename], _} = OptionParser.parse(args, strict: @permitted_args)
 
     opts = %{
       json: Keyword.get(opts, :json, false),
-      ranking: Keyword.get(opts, :ranking, false),
+      mode: if(opts[:ranking], do: :ranking, else: :by_game),
       web: Keyword.get(opts, :web, false),
       filename: filename
     }
@@ -50,43 +50,11 @@ defmodule Q3Reporter.Cli do
     {:ok, opts}
   end
 
-  defp open_file({:ok, %{filename: filepath} = opts}) do
-    case File.open(filepath, [:read]) do
-      {:ok, file} -> {:ok, opts, file}
-      {:error, :enoent} -> {:error, "'#{filepath}' not found..."}
-      {:error, _} -> {:error, "Error trying to open '#{filepath}'"}
-    end
+  defp display(result, %{json: true}) do
+    result
+    |> Jason.encode!(pretty: true)
+    |> IO.puts()
   end
 
-  defp open_file(error), do: error
-
-  defp read_file({:ok, opts, file}) do
-    content = IO.read(file, :all)
-    :ok = File.close(file)
-
-    {:ok, opts, content}
-  end
-
-  defp read_file(error), do: error
-
-  defp parse({:ok, opts, content}) do
-    result = Parser.parse(content)
-
-    {:ok, opts, result}
-  end
-
-  defp parse(error), do: error
-
-  defp print_result({:ok, %{web: true, filename: path}, result}) do
-    Supervisor.start_link([result, path])
-    Process.sleep(:infinity)
-  end
-
-  defp print_result({:ok, opts, result}) do
-    ResultPrinter.print(opts, result)
-  end
-
-  defp print_result({:error, message}) do
-    IO.puts(message)
-  end
+  defp display(result, _opts), do: IO.puts(result)
 end
