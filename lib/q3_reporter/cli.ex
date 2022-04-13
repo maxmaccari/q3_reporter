@@ -3,7 +3,7 @@ defmodule Q3Reporter.Cli do
   Cli that read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.Core.{Interpreter, Ranking}
+  alias Q3Reporter.Core.{Interpreter, Results}
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -63,8 +63,8 @@ defmodule Q3Reporter.Cli do
     end
   end
 
-  defp format(result, %{ranking: true}), do: Ranking.general(result)
-  defp format(result, _opts), do: Ranking.by_game(result)
+  defp format(result, %{ranking: true}), do: Results.general(result)
+  defp format(result, _opts), do: Results.by_game(result)
 
   defp display(result, %{json: true}) do
     result

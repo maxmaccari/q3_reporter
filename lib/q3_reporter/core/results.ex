@@ -1,4 +1,4 @@
-defmodule Q3Reporter.Core.Ranking do
+defmodule Q3Reporter.Core.Results do
   alias Q3Reporter.Core.Game
 
   defstruct entries: [], type: nil
@@ -78,15 +78,15 @@ defmodule Q3Reporter.Core.Ranking do
   defp sort_rankings(r1, r2), do: r1.kills > r2.kills
 
   defimpl String.Chars, for: __MODULE__ do
-    alias Q3Reporter.Core.Ranking
+    alias Q3Reporter.Core.Results
 
-    def to_string(%Ranking{entries: entries, type: :general}) do
+    def to_string(%Results{entries: entries, type: :general}) do
       "# General Ranking #\n" <> ranking_text(entries)
     end
 
-    def to_string(%Ranking{entries: [], type: :by_game}), do: "# No Games :( #"
+    def to_string(%Results{entries: [], type: :by_game}), do: "# No Games :( #"
 
-    def to_string(%Ranking{entries: entries, type: :by_game}) do
+    def to_string(%Results{entries: entries, type: :by_game}) do
       entries
       |> Enum.map(&"# #{&1.game} #\n#{ranking_text(&1.ranking)}\nTotal Kills: #{&1.total_kills}")
       |> Enum.join("\n\n")
@@ -102,9 +102,9 @@ defmodule Q3Reporter.Core.Ranking do
   end
 
   defimpl Jason.Encoder, for: __MODULE__ do
-    alias Q3Reporter.Core.Ranking
+    alias Q3Reporter.Core.Results
 
-    def encode(%Ranking{entries: entries}, opts) do
+    def encode(%Results{entries: entries}, opts) do
       Jason.Encode.list(entries, opts)
     end
   end

@@ -1,17 +1,17 @@
-defmodule Q3Reporter.Core.RankingTest do
+defmodule Q3Reporter.Core.ResultsTest do
   use ExUnit.Case
 
-  alias Q3Reporter.Core.{Game, Ranking, Player}
+  alias Q3Reporter.Core.{Game, Results, Player}
 
-  describe "Ranking.by_game/1" do
+  describe "Results.by_game/1" do
     test "with empty games list" do
-      assert Ranking.by_game([]) == %Ranking{type: :by_game}
+      assert Results.by_game([]) == %Results{type: :by_game}
     end
 
     test "with games list without players" do
       games = [Game.new(), Game.new()]
 
-      assert Ranking.by_game(games).entries == [
+      assert Results.by_game(games).entries == [
                %{
                  game: "Game 1",
                  ranking: [],
@@ -34,7 +34,7 @@ defmodule Q3Reporter.Core.RankingTest do
         |> Game.add_player(player1)
         |> Game.add_player(player2)
 
-      assert Ranking.by_game([game]).entries == [
+      assert Results.by_game([game]).entries == [
                %{
                  game: "Game 1",
                  ranking: [
@@ -45,7 +45,7 @@ defmodule Q3Reporter.Core.RankingTest do
                }
              ]
 
-      assert Ranking.by_game([game, game]).entries == [
+      assert Results.by_game([game, game]).entries == [
                %{
                  game: "Game 1",
                  ranking: [
@@ -74,7 +74,7 @@ defmodule Q3Reporter.Core.RankingTest do
         |> Game.add_player(player1)
         |> Game.add_player(player2)
 
-      assert Ranking.by_game([game]).entries == [
+      assert Results.by_game([game]).entries == [
                %{
                  game: "Game 1",
                  ranking: [
@@ -87,15 +87,15 @@ defmodule Q3Reporter.Core.RankingTest do
     end
   end
 
-  describe "Ranking.general/1" do
+  describe "Results.general/1" do
     test "with empty games list" do
-      assert Ranking.general([]) == %Ranking{type: :general}
+      assert Results.general([]) == %Results{type: :general}
     end
 
     test "with games list without players" do
       games = [Game.new(), Game.new()]
 
-      assert Ranking.general(games).entries == []
+      assert Results.general(games).entries == []
     end
 
     test "with games list with players sorting by kills" do
@@ -107,12 +107,12 @@ defmodule Q3Reporter.Core.RankingTest do
         |> Game.add_player(player1)
         |> Game.add_player(player2)
 
-      assert Ranking.general([game]).entries == [
+      assert Results.general([game]).entries == [
                %{nickname: "player1", kills: 10, deaths: 5},
                %{nickname: "player2", kills: 5, deaths: 5}
              ]
 
-      assert Ranking.general([game, game, game]).entries == [
+      assert Results.general([game, game, game]).entries == [
                %{nickname: "player1", kills: 30, deaths: 15},
                %{nickname: "player2", kills: 15, deaths: 15}
              ]
@@ -127,16 +127,16 @@ defmodule Q3Reporter.Core.RankingTest do
         |> Game.add_player(player1)
         |> Game.add_player(player2)
 
-      assert Ranking.general([game]).entries == [
+      assert Results.general([game]).entries == [
                %{nickname: "player2", kills: 0, deaths: 0},
                %{nickname: "player1", kills: 0, deaths: 5}
              ]
     end
   end
 
-  describe "Ranking.to_string/1" do
+  describe "Results.to_string/1" do
     test "when type is :general with no players" do
-      ranking = Ranking.general([])
+      ranking = Results.general([])
 
       assert to_string(ranking) == "# General Ranking #\n--- Empty ---"
     end
@@ -146,7 +146,7 @@ defmodule Q3Reporter.Core.RankingTest do
       player2 = Player.new(2, "player2") |> with_stats(10, 5)
 
       game = Game.new() |> Game.add_player(player1) |> Game.add_player(player2)
-      ranking = Ranking.general([game])
+      ranking = Results.general([game])
 
       assert to_string(ranking) ==
                "# General Ranking #\n" <>
@@ -155,13 +155,13 @@ defmodule Q3Reporter.Core.RankingTest do
     end
 
     test "when type is :by_game with no game" do
-      ranking = Ranking.by_game([])
+      ranking = Results.by_game([])
 
       assert to_string(ranking) == "# No Games :( #"
     end
 
     test "when type is :by_game with one game and no players" do
-      ranking = Ranking.by_game([Game.new()])
+      ranking = Results.by_game([Game.new()])
 
       assert to_string(ranking) == "# Game 1 #\n--- Empty ---\nTotal Kills: 0"
     end
@@ -171,7 +171,7 @@ defmodule Q3Reporter.Core.RankingTest do
       player2 = Player.new(2, "player2") |> with_stats(10, 5)
 
       game = Game.new() |> Game.add_player(player1) |> Game.add_player(player2)
-      ranking = Ranking.by_game([game])
+      ranking = Results.by_game([game])
 
       assert to_string(ranking) ==
                "# Game 1 #\n" <>
@@ -185,7 +185,7 @@ defmodule Q3Reporter.Core.RankingTest do
       player2 = Player.new(2, "player2") |> with_stats(10, 5)
 
       game = Game.new() |> Game.add_player(player1) |> Game.add_player(player2)
-      ranking = Ranking.by_game([game, game])
+      ranking = Results.by_game([game, game])
 
       assert to_string(ranking) ==
                "# Game 1 #\n" <>
