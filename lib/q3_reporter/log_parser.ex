@@ -4,6 +4,7 @@ defmodule Q3Reporter.LogParser do
   """
 
   alias Q3Reporter.Core
+  alias Q3Reporter.Core.Results
 
   @doc """
   Parse a log content into a `Q3Reporter.Core.Results` structure from a file.
@@ -19,7 +20,8 @@ defmodule Q3Reporter.LogParser do
       :games => [ %Q3Reporter.Core.Game{...} ]
     }}
   """
-  @spec parse(String.t(), Core.opts() | nil) :: {:ok, Results.t()} | {:error, String.t()}
+  @spec parse(String.t(), Core.opts()) ::
+          {:ok, Results.t()} | {:error, String.t()}
   def parse(path, opts \\ []) do
     with {:ok, content} <- File.read(path),
          results <- Core.interpret_log(content, opts) do
