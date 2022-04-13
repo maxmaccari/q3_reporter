@@ -26,7 +26,7 @@ defmodule Q3Reporter.CliTest do
 
   test "parse a file normally" do
     assert capture_io(fn ->
-             Cli.main(["priv/examples/game1.log"])
+             Cli.main(["test/fixtures/example.log"])
            end) == """
            # Game 1 #
            Isgalamido: 0 kills / 0 deaths
@@ -36,7 +36,7 @@ defmodule Q3Reporter.CliTest do
 
   test "parse a file and print in json format" do
     assert capture_io(fn ->
-             Cli.main(["--json", "priv/examples/game1.log"])
+             Cli.main(["--json", "test/fixtures/example.log"])
            end) == """
            [
              {
@@ -56,7 +56,7 @@ defmodule Q3Reporter.CliTest do
 
   test "parse a file with ranking option" do
     assert capture_io(fn ->
-             Cli.main(["--ranking", "priv/examples/game1.log"])
+             Cli.main(["--ranking", "test/fixtures/example.log"])
            end) == """
            # General Ranking #
            Isgalamido: 0 kills / 0 deaths
@@ -65,7 +65,7 @@ defmodule Q3Reporter.CliTest do
 
   test "parse a file with ranking option in json format" do
     assert capture_io(fn ->
-             Cli.main(["--ranking", "--json", "priv/examples/game1.log"])
+             Cli.main(["--ranking", "--json", "test/fixtures/example.log"])
            end) ==
              """
              [

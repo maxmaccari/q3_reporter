@@ -4,7 +4,6 @@
       name: "default",
       files: %{
         included: ["lib/", "test/"],
-        excluded: ["lib/q3_reporter/legacy", "test/q3_reporter/legacy"]
       },
       plugins: [],
       requires: [],
