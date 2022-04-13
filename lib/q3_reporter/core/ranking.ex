@@ -100,4 +100,12 @@ defmodule Q3Reporter.Core.Ranking do
       |> Enum.join("\n")
     end
   end
+
+  defimpl Jason.Encoder, for: __MODULE__ do
+    alias Q3Reporter.Core.Ranking
+
+    def encode(%Ranking{entries: entries}, opts) do
+      Jason.Encode.list(entries, opts)
+    end
+  end
 end

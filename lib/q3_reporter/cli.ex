@@ -3,7 +3,8 @@ defmodule Q3Reporter.Cli do
   Cli that read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.{Parser, ResultPrinter, Supervisor}
+  alias Q3Reporter.Supervisor
+  alias Q3Reporter.Core.{LogInterpreter, Ranking}
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -18,8 +19,9 @@ defmodule Q3Reporter.Cli do
     with {:ok, opts} <- parse_args(args),
          {:ok, log} <- read_log(opts.filename) do
       log
-      |> Parser.parse()
-      |> print_result(opts)
+      |> LogInterpreter.interpret()
+      |> format(opts)
+      |> display(opts)
     else
       {:error, message} -> IO.puts(:stderr, message)
     end
@@ -62,12 +64,19 @@ defmodule Q3Reporter.Cli do
     end
   end
 
-  defp print_result(result, %{web: true, filename: path}) do
-    Supervisor.start_link([result, path])
-    Process.sleep(:infinity)
+  defp format(result, %{ranking: true}), do: Ranking.general(result)
+  defp format(result, _opts), do: Ranking.by_game(result)
+
+  # defp display(result, %{web: true, filename: path}) do
+  #   Supervisor.start_link([result, path])
+  #   Process.sleep(:infinity)
+  # end
+
+  defp display(result, %{json: true}) do
+    result
+    |> Jason.encode!(pretty: true)
+    |> IO.puts()
   end
 
-  defp print_result(result, opts) do
-    ResultPrinter.print(opts, result)
-  end
+  defp display(result, _opts), do: IO.puts(result)
 end
