@@ -5,7 +5,7 @@ defmodule Q3Reporter.Core do
 
   alias Q3Reporter.Core.{Interpreter, Results}
 
-  @type opts :: keyword({:mode, :by_game | :ranking | nil})
+  @type opts :: [{:mode, :by_game | :ranking}]
 
   @doc """
   Parse a log content into a `Q3Reporter.Core.Results` structure.

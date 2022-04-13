@@ -36,6 +36,8 @@ defmodule Q3Reporter.Cli do
   end
 
   @permitted_args [json: :boolean, ranking: :boolean]
+  @spec parse_args(list()) ::
+          {:ok, %{json: boolean(), mode: :ranking | :by_game, filename: String.t()}}
   defp parse_args(args) do
     {opts, [filename], _} = OptionParser.parse(args, strict: @permitted_args)
 
