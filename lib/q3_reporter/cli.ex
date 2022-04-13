@@ -67,11 +67,6 @@ defmodule Q3Reporter.Cli do
   defp format(result, %{ranking: true}), do: Ranking.general(result)
   defp format(result, _opts), do: Ranking.by_game(result)
 
-  # defp display(result, %{web: true, filename: path}) do
-  #   Supervisor.start_link([result, path])
-  #   Process.sleep(:infinity)
-  # end
-
   defp display(result, %{json: true}) do
     result
     |> Jason.encode!(pretty: true)

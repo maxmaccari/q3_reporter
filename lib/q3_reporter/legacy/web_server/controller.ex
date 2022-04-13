@@ -26,6 +26,6 @@ defmodule Q3Reporter.WebServer.Controller do
   end
 
   defp templates_path do
-    Path.expand("../../../templates", __DIR__)
+    Path.expand("../../../../templates", __DIR__)
   end
 end
