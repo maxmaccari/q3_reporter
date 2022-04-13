@@ -3,15 +3,15 @@ defmodule Q3Reporter.Core.ResultsTest do
 
   alias Q3Reporter.Core.{Game, Results, Player}
 
-  describe "Results.by_game/1" do
-    test "with empty games list" do
-      assert Results.by_game([]) == %Results{mode: :by_game}
+  describe "Results.new/2 with :by_game mode" do
+    test "and with empty games list" do
+      assert Results.new([], :by_game) == %Results{mode: :by_game}
     end
 
-    test "with games list without players" do
+    test "and with games list without players" do
       games = [Game.new(), Game.new()]
 
-      assert Results.by_game(games).entries == [
+      assert Results.new(games, :by_game).entries == [
                %{
                  game: "Game 1",
                  ranking: [],
@@ -25,7 +25,7 @@ defmodule Q3Reporter.Core.ResultsTest do
              ]
     end
 
-    test "with games list with players sorting by kills" do
+    test "and with games list with players sorting by kills" do
       player1 = Player.new(1, "player1") |> with_stats(10, 5)
       player2 = Player.new(2, "player2") |> with_stats(5, 5)
 
@@ -34,7 +34,7 @@ defmodule Q3Reporter.Core.ResultsTest do
         |> Game.add_player(player1)
         |> Game.add_player(player2)
 
-      assert Results.by_game([game]).entries == [
+      assert Results.new([game], :by_game).entries == [
                %{
                  game: "Game 1",
                  ranking: [
@@ -45,7 +45,7 @@ defmodule Q3Reporter.Core.ResultsTest do
                }
              ]
 
-      assert Results.by_game([game, game]).entries == [
+      assert Results.new([game, game], :by_game).entries == [
                %{
                  game: "Game 1",
                  ranking: [
@@ -74,7 +74,7 @@ defmodule Q3Reporter.Core.ResultsTest do
         |> Game.add_player(player1)
         |> Game.add_player(player2)
 
-      assert Results.by_game([game]).entries == [
+      assert Results.new([game], :by_game).entries == [
                %{
                  game: "Game 1",
                  ranking: [
@@ -87,18 +87,18 @@ defmodule Q3Reporter.Core.ResultsTest do
     end
   end
 
-  describe "Results.general/1" do
-    test "with empty games list" do
-      assert Results.general([]) == %Results{mode: :ranking}
+  describe "Results.new/2 with :ranking mode" do
+    test "and with empty games list" do
+      assert Results.new([], :ranking) == %Results{mode: :ranking}
     end
 
-    test "with games list without players" do
+    test "and with games list without players" do
       games = [Game.new(), Game.new()]
 
-      assert Results.general(games).entries == []
+      assert Results.new(games, :ranking).entries == []
     end
 
-    test "with games list with players sorting by kills" do
+    test "and with games list with players sorting by kills" do
       player1 = Player.new(1, "player1") |> with_stats(10, 5)
       player2 = Player.new(2, "player2") |> with_stats(5, 5)
 
@@ -107,18 +107,18 @@ defmodule Q3Reporter.Core.ResultsTest do
         |> Game.add_player(player1)
         |> Game.add_player(player2)
 
-      assert Results.general([game]).entries == [
+      assert Results.new([game], :ranking).entries == [
                %{nickname: "player1", kills: 10, deaths: 5},
                %{nickname: "player2", kills: 5, deaths: 5}
              ]
 
-      assert Results.general([game, game, game]).entries == [
+      assert Results.new([game, game, game], :ranking).entries == [
                %{nickname: "player1", kills: 30, deaths: 15},
                %{nickname: "player2", kills: 15, deaths: 15}
              ]
     end
 
-    test "with games list with players sorting by less deaths" do
+    test "and with games list with players sorting by less deaths" do
       player1 = Player.new(1, "player1") |> with_stats(0, 5)
       player2 = Player.new(2, "player2") |> with_stats(0, 0)
 
@@ -127,26 +127,26 @@ defmodule Q3Reporter.Core.ResultsTest do
         |> Game.add_player(player1)
         |> Game.add_player(player2)
 
-      assert Results.general([game]).entries == [
+      assert Results.new([game], :ranking).entries == [
                %{nickname: "player2", kills: 0, deaths: 0},
                %{nickname: "player1", kills: 0, deaths: 5}
              ]
     end
   end
 
-  describe "Results.to_string/1" do
-    test "when type is :general with no players" do
-      ranking = Results.general([])
+  describe "Results to_string/1" do
+    test "when mode is :ranking with no players" do
+      ranking = Results.new([], :ranking)
 
       assert to_string(ranking) == "# General Ranking #\n--- Empty ---"
     end
 
-    test "when type is :general with players" do
+    test "when mode is :ranking with players" do
       player1 = Player.new(1, "player1") |> with_stats(5, 0)
       player2 = Player.new(2, "player2") |> with_stats(10, 5)
 
       game = Game.new() |> Game.add_player(player1) |> Game.add_player(player2)
-      ranking = Results.general([game])
+      ranking = Results.new([game], :ranking)
 
       assert to_string(ranking) ==
                "# General Ranking #\n" <>
@@ -155,13 +155,13 @@ defmodule Q3Reporter.Core.ResultsTest do
     end
 
     test "when mode is :by_game with no game" do
-      ranking = Results.by_game([])
+      ranking = Results.new([], :by_game)
 
       assert to_string(ranking) == "# No Games :( #"
     end
 
     test "when mode is :by_game with one game and no players" do
-      ranking = Results.by_game([Game.new()])
+      ranking = Results.new([Game.new()], :by_game)
 
       assert to_string(ranking) == "# Game 1 #\n--- Empty ---\nTotal Kills: 0"
     end
@@ -171,7 +171,7 @@ defmodule Q3Reporter.Core.ResultsTest do
       player2 = Player.new(2, "player2") |> with_stats(10, 5)
 
       game = Game.new() |> Game.add_player(player1) |> Game.add_player(player2)
-      ranking = Results.by_game([game])
+      ranking = Results.new([game], :by_game)
 
       assert to_string(ranking) ==
                "# Game 1 #\n" <>
@@ -185,7 +185,7 @@ defmodule Q3Reporter.Core.ResultsTest do
       player2 = Player.new(2, "player2") |> with_stats(10, 5)
 
       game = Game.new() |> Game.add_player(player1) |> Game.add_player(player2)
-      ranking = Results.by_game([game, game])
+      ranking = Results.new([game, game], :by_game)
 
       assert to_string(ranking) ==
                "# Game 1 #\n" <>

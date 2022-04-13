@@ -20,15 +20,24 @@ defmodule Q3Reporter.Core.Results do
           entries: list(entry | game)
         }
 
-  defp new(entries, type) when type in [:by_game, :ranking] do
+  @spec new(list(Game.t()), :by_game | :ranking | nil) :: t()
+  def new(games, :ranking) do
     %__MODULE__{
-      entries: entries,
-      mode: type
+      entries: ranking_entries(games),
+      mode: :ranking
     }
   end
 
-  @spec by_game(list(Game.t())) :: t()
-  def by_game(games) do
+  def new(games, :by_game) do
+    %__MODULE__{
+      entries: by_game_entries(games),
+      mode: :by_game
+    }
+  end
+
+  def new(games, _), do: new(games, :by_game)
+
+  defp by_game_entries(games) do
     games
     |> Enum.with_index()
     |> Enum.map(fn {game, index} ->
@@ -38,16 +47,13 @@ defmodule Q3Reporter.Core.Results do
         total_kills: Game.total_kills(game)
       }
     end)
-    |> new(:by_game)
   end
 
-  @spec general(list(Game.t())) :: t()
-  def general(games) do
+  defp ranking_entries(games) do
     games
     |> Enum.map(&Game.list_players/1)
     |> List.flatten()
     |> build_ranking()
-    |> new(:ranking)
   end
 
   defp build_ranking(players) do
