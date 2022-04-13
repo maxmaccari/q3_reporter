@@ -1,7 +1,7 @@
 defmodule Q3Reporter.Core.InterpreterTest do
   use ExUnit.Case
 
-  alias Q3Reporter.Core.{Interpreter, Game}
+  alias Q3Reporter.Core.{Game, Interpreter}
 
   describe "Interpreter.interpret/1" do
     test "one game no players" do

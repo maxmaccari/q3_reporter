@@ -95,25 +95,26 @@ defmodule Q3Reporter.Core.Results do
     def to_string(%Results{entries: [], mode: :by_game}), do: "# No Games :( #"
 
     def to_string(%Results{entries: entries, mode: :by_game}) do
-      entries
-      |> Enum.map(&"# #{&1.game} #\n#{ranking_text(&1.ranking)}\nTotal Kills: #{&1.total_kills}")
-      |> Enum.join("\n\n")
+      Enum.map_join(
+        entries,
+        "\n\n",
+        &"# #{&1.game} #\n#{ranking_text(&1.ranking)}\nTotal Kills: #{&1.total_kills}"
+      )
     end
 
     defp ranking_text([]), do: "--- Empty ---"
 
     defp ranking_text(entries) do
-      entries
-      |> Enum.map(&"#{&1.nickname}: #{&1.kills} kills / #{&1.deaths} deaths")
-      |> Enum.join("\n")
+      Enum.map_join(entries, "\n", &"#{&1.nickname}: #{&1.kills} kills / #{&1.deaths} deaths")
     end
   end
 
   defimpl Jason.Encoder, for: __MODULE__ do
+    alias Jason.Encode
     alias Q3Reporter.Core.Results
 
     def encode(%Results{entries: entries}, opts) do
-      Jason.Encode.list(entries, opts)
+      Encode.list(entries, opts)
     end
   end
 end

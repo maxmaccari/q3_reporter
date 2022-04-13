@@ -10,7 +10,7 @@ defmodule Q3Reporter.Core.Game do
         }
 
   @spec new() :: t()
-  def new() do
+  def new do
     %__MODULE__{}
   end
 

@@ -223,7 +223,7 @@ defmodule Q3Reporter.Core.GameTest do
     game
   end
 
-  defp random_time() do
+  defp random_time do
     hour = Enum.random(0..23)
     minutes = Enum.random(0..59)
 

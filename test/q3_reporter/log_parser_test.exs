@@ -1,7 +1,7 @@
 defmodule Q3Reporter.LogParserTest do
   use ExUnit.Case
-  alias Q3Reporter.LogParser
   alias Q3Reporter.Core.Results
+  alias Q3Reporter.LogParser
 
   describe "LogParserTest.parse/2" do
     @path Path.join(__DIR__, "../fixtures/example.log")

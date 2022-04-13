@@ -1,7 +1,7 @@
 defmodule Q3Reporter.Core.ResultsTest do
   use ExUnit.Case
 
-  alias Q3Reporter.Core.{Game, Results, Player}
+  alias Q3Reporter.Core.{Game, Player, Results}
 
   describe "Results.new/2 with :by_game mode" do
     test "and with empty games list and invalid mode" do
