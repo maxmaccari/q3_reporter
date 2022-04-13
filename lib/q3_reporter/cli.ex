@@ -3,8 +3,7 @@ defmodule Q3Reporter.Cli do
   Cli that read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.Supervisor
-  alias Q3Reporter.Core.{LogInterpreter, Ranking}
+  alias Q3Reporter.Core.{Interpreter, Ranking}
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -19,7 +18,7 @@ defmodule Q3Reporter.Cli do
     with {:ok, opts} <- parse_args(args),
          {:ok, log} <- read_log(opts.filename) do
       log
-      |> LogInterpreter.interpret()
+      |> Interpreter.interpret()
       |> format(opts)
       |> display(opts)
     else

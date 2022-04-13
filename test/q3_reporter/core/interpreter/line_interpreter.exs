@@ -1,9 +1,9 @@
-defmodule Q3Reporter.Core.LogInterpreter.ParserTest do
+defmodule Q3Reporter.Core.Interpreter.LineInterpreter do
   use ExUnit.Case
 
-  alias Q3Reporter.Core.LogInterpreter.Parser
+  alias Q3Reporter.Core.Interpreter.Parser
 
-  describe "ParserTest.parse_line/1" do
+  describe "LineInterpreter.parse_line/1" do
     test "12:00 InitGame:" do
       assert Parser.parse_line(" 12:00 InitGame:") == {:init_game, Time.new!(12, 0, 0)}
       assert Parser.parse_line(" 18:35 InitGame:") == {:init_game, Time.new!(18, 35, 0)}

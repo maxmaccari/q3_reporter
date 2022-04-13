@@ -1,4 +1,4 @@
-defmodule Q3Reporter.Core.LogInterpreter.Parser do
+defmodule Q3Reporter.Core.Interpreter.LineInterpreter do
   @moduledoc false
 
   @doc false

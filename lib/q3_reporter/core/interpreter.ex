@@ -1,7 +1,7 @@
-defmodule Q3Reporter.Core.LogInterpreter do
+defmodule Q3Reporter.Core.Interpreter do
   alias Q3Reporter.Core.{Game, Player}
 
-  import Q3Reporter.Core.LogInterpreter.Parser
+  import Q3Reporter.Core.Interpreter.LineInterpreter
 
   @spec interpret(String.t()) :: list(Game.t())
   def interpret(log) do

@@ -1,16 +1,16 @@
-defmodule Q3Reporter.Core.LogInterpreterTest do
+defmodule Q3Reporter.Core.InterpreterTest do
   use ExUnit.Case
 
-  alias Q3Reporter.Core.{LogInterpreter, Game}
+  alias Q3Reporter.Core.{Interpreter, Game}
 
-  describe "LogInterpreter.interpret/1" do
+  describe "Interpreter.interpret/1" do
     test "one game no players" do
       log =
         ~S[  0:00 InitGame: \sv_floodProtect\1\sv_maxPing\0\sv_minPing\0\sv_maxRate\10000\sv_minRate\0\sv_hostname\Code Miner Server\g_gametype\0\sv_privateClients\2\sv_maxclients\16\sv_allowDownload\0\dmflags\0\fraglimit\20\timelimit\15\g_maxGameClients\0\capturelimit\8\version\ioq3 1.36 linux-x86_64 Apr 12 2009\protocol\68\mapname\q3dm17\gamename\baseq3\g_needpass\0
  20:37 ShutdownGame:
       ]
 
-      assert [%Game{} = game] = LogInterpreter.interpret(log)
+      assert [%Game{} = game] = Interpreter.interpret(log)
       assert Enum.empty?(game.players)
     end
 
@@ -33,7 +33,7 @@ defmodule Q3Reporter.Core.LogInterpreterTest do
  20:37 ShutdownGame:
       ]
 
-      assert [%Game{} = game] = LogInterpreter.interpret(log)
+      assert [%Game{} = game] = Interpreter.interpret(log)
       assert Game.players_count(game) == 2
     end
 
@@ -45,11 +45,11 @@ defmodule Q3Reporter.Core.LogInterpreterTest do
  21:40 ShutdownGame:
       ]
 
-      assert [%Game{}, %Game{}] = LogInterpreter.interpret(log)
+      assert [%Game{}, %Game{}] = Interpreter.interpret(log)
     end
   end
 
-  describe "LogInterpreter.interpret/2" do
+  describe "Interpreter.interpret/2" do
     test "interpret log with game list merge new games" do
       games = [Game.new()]
 
@@ -58,7 +58,7 @@ defmodule Q3Reporter.Core.LogInterpreterTest do
  20:37 ShutdownGame:
       ]
 
-      assert [%Game{}, %Game{}] = LogInterpreter.interpret(games, log)
+      assert [%Game{}, %Game{}] = Interpreter.interpret(games, log)
     end
   end
 end
