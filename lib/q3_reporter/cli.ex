@@ -16,7 +16,7 @@ defmodule Q3Reporter.Cli do
   """
   def main(args \\ []) do
     with {:ok, opts} <- parse_args(args),
-         {:ok, results} <- LogParser.parse(opts.filename, opts.mode) do
+         {:ok, results} <- LogParser.parse(opts.filename, mode: opts.mode) do
       display(results, opts)
     else
       {:error, message} -> IO.puts(:stderr, message)

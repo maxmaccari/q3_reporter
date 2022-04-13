@@ -1,11 +1,10 @@
 defmodule Q3Reporter.LogParser do
   alias Q3Reporter.Core
-  alias Q3Reporter.Core.Results
 
-  @spec parse(String.t(), Results.mode() | nil) :: {:ok, Results.t()} | {:error, String.t()}
-  def parse(path, mode) do
+  @spec parse(String.t(), Core.opts() | nil) :: {:ok, Results.t()} | {:error, String.t()}
+  def parse(path, opts \\ []) do
     with {:ok, content} <- File.read(path),
-         results <- Core.interpret_log(content, mode: mode) do
+         results <- Core.interpret_log(content, opts) do
       {:ok, results}
     else
       {:error, :enoent} -> {:error, "'#{path}' not found..."}
