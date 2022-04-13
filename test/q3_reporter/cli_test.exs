@@ -14,7 +14,7 @@ defmodule Q3Reporter.CliTest do
              Options:
                --ranking => Output ranking instead summary
                --json => Output result as json
-               --web => Start a webserver with ranking and game summary\n
+
              """
   end
 

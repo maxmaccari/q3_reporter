@@ -15,7 +15,7 @@ defmodule Q3Reporter.Core.Interpreter do
 
     log
     |> String.split("\n")
-    |> Enum.map(&parse_line/1)
+    |> Enum.map(&interpret_line/1)
     |> Enum.reduce(games, &apply_action/2)
     |> Enum.reverse()
   end
