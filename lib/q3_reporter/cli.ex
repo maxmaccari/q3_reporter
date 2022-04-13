@@ -3,7 +3,7 @@ defmodule Q3Reporter.Cli do
   Cli that read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.Core.{Interpreter, Results}
+  alias Q3Reporter.Core
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -18,8 +18,7 @@ defmodule Q3Reporter.Cli do
     with {:ok, opts} <- parse_args(args),
          {:ok, log} <- read_log(opts.filename) do
       log
-      |> Interpreter.interpret()
-      |> format(opts)
+      |> Core.interpret_log(mode: opts.mode)
       |> display(opts)
     else
       {:error, message} -> IO.puts(:stderr, message)
@@ -45,7 +44,7 @@ defmodule Q3Reporter.Cli do
 
     opts = %{
       json: Keyword.get(opts, :json, false),
-      ranking: Keyword.get(opts, :ranking, false),
+      mode: if(opts[:ranking], do: :ranking, else: :games),
       web: Keyword.get(opts, :web, false),
       filename: filename
     }
@@ -62,9 +61,6 @@ defmodule Q3Reporter.Cli do
       {:error, _} -> {:error, "Error trying to open '#{path}'"}
     end
   end
-
-  defp format(result, %{ranking: true}), do: Results.general(result)
-  defp format(result, _opts), do: Results.by_game(result)
 
   defp display(result, %{json: true}) do
     result
