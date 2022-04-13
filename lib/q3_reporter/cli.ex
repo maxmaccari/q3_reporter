@@ -30,20 +30,18 @@ defmodule Q3Reporter.Cli do
     Options:
       --ranking => Output ranking instead summary
       --json => Output result as json
-      --web => Start a webserver with ranking and game summary
     """
 
     {:error, message}
   end
 
-  @permitted_args [json: :boolean, ranking: :boolean, web: :boolean]
+  @permitted_args [json: :boolean, ranking: :boolean]
   defp parse_args(args) do
     {opts, [filename], _} = OptionParser.parse(args, strict: @permitted_args)
 
     opts = %{
       json: Keyword.get(opts, :json, false),
       mode: if(opts[:ranking], do: :ranking, else: :by_game),
-      web: Keyword.get(opts, :web, false),
       filename: filename
     }
 
