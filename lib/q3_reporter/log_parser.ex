@@ -8,9 +8,11 @@ defmodule Q3Reporter.LogParser do
       {:ok, results}
     else
       {:error, :enoent} -> {:error, "'#{path}' not found..."}
+      # coveralls-ignore-start
       {:error, :eacces} -> {:error, "You don't have permission to open '#{path}..."}
       {:error, :enomem} -> {:error, "There's not enough memory to open '#{path}..."}
       {:error, _} -> {:error, "Error trying to open '#{path}'"}
+      # coveralls-ignore-stop
     end
   end
 end

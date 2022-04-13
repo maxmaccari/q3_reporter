@@ -4,6 +4,10 @@ defmodule Q3Reporter.Core.ResultsTest do
   alias Q3Reporter.Core.{Game, Results, Player}
 
   describe "Results.new/2 with :by_game mode" do
+    test "and with empty games list and invalid mode" do
+      assert Results.new([], :invalid) == %Results{mode: :by_game}
+    end
+
     test "and with empty games list" do
       assert Results.new([], :by_game) == %Results{mode: :by_game}
     end

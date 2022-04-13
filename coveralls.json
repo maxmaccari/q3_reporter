@@ -1,0 +1,7 @@
+{
+  "skip_files": [
+    "lib/q3_reporter/legacy"
+  ],
+  "treat_no_relevant_lines_as_covered": true,
+  "minimum_coverage": 95
+}
