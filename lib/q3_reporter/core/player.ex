@@ -1,4 +1,6 @@
 defmodule Q3Reporter.Core.Player do
+  @moduledoc false
+
   defstruct id: nil, nickname: "", kills: 0, deaths: 0, connected?: false
 
   @type id :: String.t()

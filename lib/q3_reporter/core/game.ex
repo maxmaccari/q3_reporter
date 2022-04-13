@@ -1,4 +1,6 @@
 defmodule Q3Reporter.Core.Game do
+  @moduledoc false
+
   alias Q3Reporter.Core.Player
 
   defstruct players: %{},

@@ -1,4 +1,8 @@
 defmodule Q3Reporter.Core.Results do
+  @moduledoc """
+  Struct that handle the results of the q3_reporter.
+  """
+
   alias Q3Reporter.Core.Game
 
   defstruct entries: [], mode: nil
@@ -22,6 +26,7 @@ defmodule Q3Reporter.Core.Results do
           entries: list(entry | game)
         }
 
+  @doc false
   @spec new(list(Game.t()), mode() | nil) :: t()
   def new(games, :ranking) do
     %__MODULE__{

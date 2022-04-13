@@ -1,4 +1,6 @@
 defmodule Q3Reporter.Core.Interpreter do
+  @moduledoc false
+
   alias Q3Reporter.Core.{Game, Player}
 
   import Q3Reporter.Core.Interpreter.LineInterpreter
