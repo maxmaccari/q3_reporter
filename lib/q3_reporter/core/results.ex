@@ -3,6 +3,8 @@ defmodule Q3Reporter.Core.Results do
 
   defstruct entries: [], mode: nil
 
+  @type mode :: :by_game | :ranking
+
   @type entry :: %{
           nickname: String.t(),
           kills: integer(),
@@ -16,11 +18,11 @@ defmodule Q3Reporter.Core.Results do
         }
 
   @type t :: %__MODULE__{
-          mode: :by_game | :ranking,
+          mode: mode(),
           entries: list(entry | game)
         }
 
-  @spec new(list(Game.t()), :by_game | :ranking | nil) :: t()
+  @spec new(list(Game.t()), mode() | nil) :: t()
   def new(games, :ranking) do
     %__MODULE__{
       entries: ranking_entries(games),

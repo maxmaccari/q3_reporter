@@ -3,7 +3,7 @@ defmodule Q3Reporter.Cli do
   Cli that read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.Core
+  alias Q3Reporter.LogParser
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -16,10 +16,8 @@ defmodule Q3Reporter.Cli do
   """
   def main(args \\ []) do
     with {:ok, opts} <- parse_args(args),
-         {:ok, log} <- read_log(opts.filename) do
-      log
-      |> Core.interpret_log(mode: opts.mode)
-      |> display(opts)
+         {:ok, results} <- LogParser.parse(opts.filename, opts.mode) do
+      display(results, opts)
     else
       {:error, message} -> IO.puts(:stderr, message)
     end
@@ -50,16 +48,6 @@ defmodule Q3Reporter.Cli do
     }
 
     {:ok, opts}
-  end
-
-  defp read_log(path) do
-    case File.read(path) do
-      {:ok, log} -> {:ok, log}
-      {:error, :enoent} -> {:error, "'#{path}' not found..."}
-      {:error, :eacces} -> {:error, "You don't have permission to open '#{path}..."}
-      {:error, :enomem} -> {:error, "There's not enough memory to open '#{path}..."}
-      {:error, _} -> {:error, "Error trying to open '#{path}'"}
-    end
   end
 
   defp display(result, %{json: true}) do

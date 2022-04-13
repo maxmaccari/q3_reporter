@@ -26,14 +26,15 @@ defmodule Q3Reporter.UpdaterServer do
   # Server
 
   def handle_info(:TICK, {path, _mtime} = state) do
-    new_state = if File.exists?(path) && file_updated?(state) do
-      %{mtime: new_mtime} = File.stat!(path)
-      update_result(path)
+    new_state =
+      if File.exists?(path) && file_updated?(state) do
+        %{mtime: new_mtime} = File.stat!(path)
+        update_result(path)
 
-      {path, new_mtime}
-    else
-      state
-    end
+        {path, new_mtime}
+      else
+        state
+      end
 
     Process.send_after(@name, :TICK, @timeout)
 
@@ -41,7 +42,7 @@ defmodule Q3Reporter.UpdaterServer do
   end
 
   def terminate(reason, _state) do
-    IO.inspect reason
+    IO.inspect(reason)
   end
 
   defp file_updated?({path, mtime}) do

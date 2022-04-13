@@ -26,7 +26,7 @@ defmodule Q3Reporter.WebServerMonitor do
     {:reply, server_pid, server_pid}
   end
 
-  def handle_info({:EXIT, _pid, _reason},  _server_pid) do
+  def handle_info({:EXIT, _pid, _reason}, _server_pid) do
     server_pid = start_server()
 
     {:noreply, server_pid}
