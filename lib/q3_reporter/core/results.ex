@@ -93,6 +93,7 @@ defmodule Q3Reporter.Core.Results do
   @doc """
   Convert results to string format.
   """
+  @spec to_string(t()) :: String.t()
   def to_string(%__MODULE__{entries: entries, mode: :ranking}) do
     "# General Ranking #\n" <> ranking_text(entries)
   end
