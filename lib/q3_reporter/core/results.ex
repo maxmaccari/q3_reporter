@@ -90,28 +90,33 @@ defmodule Q3Reporter.Core.Results do
 
   defp sort_rankings(r1, r2), do: r1.kills > r2.kills
 
+  @doc """
+  Convert results to string format.
+  """
+  def to_string(%__MODULE__{entries: entries, mode: :ranking}) do
+    "# General Ranking #\n" <> ranking_text(entries)
+  end
+
+  def to_string(%__MODULE__{entries: [], mode: :by_game}), do: "# No Games :( #"
+
+  def to_string(%__MODULE__{entries: entries, mode: :by_game}) do
+    Enum.map_join(
+      entries,
+      "\n\n",
+      &"# #{&1.game} #\n#{ranking_text(&1.ranking)}\nTotal Kills: #{&1.total_kills}"
+    )
+  end
+
+  defp ranking_text([]), do: "--- Empty ---"
+
+  defp ranking_text(entries) do
+    Enum.map_join(entries, "\n", &"#{&1.nickname}: #{&1.kills} kills / #{&1.deaths} deaths")
+  end
+
   defimpl String.Chars, for: __MODULE__ do
     alias Q3Reporter.Core.Results
 
-    def to_string(%Results{entries: entries, mode: :ranking}) do
-      "# General Ranking #\n" <> ranking_text(entries)
-    end
-
-    def to_string(%Results{entries: [], mode: :by_game}), do: "# No Games :( #"
-
-    def to_string(%Results{entries: entries, mode: :by_game}) do
-      Enum.map_join(
-        entries,
-        "\n\n",
-        &"# #{&1.game} #\n#{ranking_text(&1.ranking)}\nTotal Kills: #{&1.total_kills}"
-      )
-    end
-
-    defp ranking_text([]), do: "--- Empty ---"
-
-    defp ranking_text(entries) do
-      Enum.map_join(entries, "\n", &"#{&1.nickname}: #{&1.kills} kills / #{&1.deaths} deaths")
-    end
+    def to_string(results), do: Results.to_string(results)
   end
 
   defimpl Jason.Encoder, for: __MODULE__ do
