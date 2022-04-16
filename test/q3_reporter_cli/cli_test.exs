@@ -1,8 +1,8 @@
-defmodule Q3Reporter.CliTest do
+defmodule Q3ReporterCli.CliTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
 
-  alias Q3Reporter.Cli
+  alias Q3ReporterCli.Cli
 
   test "show help when send invalid params" do
     assert capture_io(:stderr, fn ->

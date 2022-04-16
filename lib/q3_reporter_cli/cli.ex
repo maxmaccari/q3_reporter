@@ -1,4 +1,4 @@
-defmodule Q3Reporter.Cli do
+defmodule Q3ReporterCli.Cli do
   @moduledoc """
   Cli that read and parse a quake 3 logger showing the log summary.
   """
