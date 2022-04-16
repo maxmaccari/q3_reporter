@@ -1,9 +1,9 @@
-defmodule Q3Reporter.Cli do
+defmodule Q3ReporterCli.Cli do
   @moduledoc """
   Cli that read and parse a quake 3 logger showing the log summary.
   """
 
-  alias Q3Reporter.LogParser
+  alias Q3Reporter
 
   @doc """
   Function that execute the log parsing by the given args.
@@ -16,7 +16,7 @@ defmodule Q3Reporter.Cli do
   """
   def main(args \\ []) do
     with {:ok, opts} <- parse_args(args),
-         {:ok, results} <- LogParser.parse(opts.filename, mode: opts.mode) do
+         {:ok, results} <- Q3Reporter.parse(opts.filename, mode: opts.mode) do
       display(results, opts)
     else
       {:error, message} -> IO.puts(:stderr, message)

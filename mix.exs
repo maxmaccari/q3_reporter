@@ -20,7 +20,7 @@ defmodule Q3Reporter.MixProject do
   end
 
   def escript do
-    [main_module: Q3Reporter.Cli]
+    [main_module: Q3ReporterCli.Cli]
   end
 
   # Run "mix help compile.app" to learn about applications.
