@@ -5,11 +5,9 @@ defmodule Q3Reporter.FileWatcher.Server do
 
   use GenServer
 
-  @type state :: %{
-          mtime: integer(),
-          path: String.t(),
-          subscribers: []
-        }
+  alias Q3Reporter.FileWatcher.State
+
+  @type state :: State.t()
 
   # Client
 
@@ -18,10 +16,12 @@ defmodule Q3Reporter.FileWatcher.Server do
     GenServer.start_link(__MODULE__, path, opts)
   end
 
+  @spec subscribe(pid) :: :ok
   def subscribe(file) do
     GenServer.call(file, :subscribe)
   end
 
+  @spec unsubscribe(pid) :: :ok
   def unsubscribe(file) do
     GenServer.call(file, :unsubscribe)
   end
@@ -35,7 +35,7 @@ defmodule Q3Reporter.FileWatcher.Server do
       {:ok, %{mtime: mtime}} ->
         :timer.send_interval(@timeout, :tick)
 
-        {:ok, %{path: path, mtime: mtime, subscribers: []}}
+        {:ok, State.new(path: path, mtime: mtime)}
 
       {:error, reason} ->
         {:stop, reason}
@@ -43,41 +43,31 @@ defmodule Q3Reporter.FileWatcher.Server do
   end
 
   @impl true
-  def handle_call(:subscribe, {subscriber, _}, %{subscribers: subscribers} = state) do
-    state = %{state | subscribers: [subscriber | subscribers]}
-
-    {:reply, :ok, state}
+  def handle_call(:subscribe, {subscriber, _}, state) do
+    {:reply, :ok, State.subscribe(state, subscriber)}
   end
 
   @impl true
-  def handle_call(:unsubscribe, {subscriber, _}, %{subscribers: subscribers} = state) do
-    state = %{state | subscribers: remove_subscriber(subscribers, subscriber)}
-
-    {:reply, :ok, state}
+  def handle_call(:unsubscribe, {subscriber, _}, state) do
+    {:reply, :ok, State.unsubscribe(state, subscriber)}
   end
 
   @impl true
   def handle_info(:tick, state) do
-    %{subscribers: subscribers, mtime: mtime, path: path} = state
+    %{mtime: mtime, path: path} = state
 
     case File.stat!(path) do
       %{mtime: ^mtime} ->
         {:noreply, state}
 
       %{mtime: new_mtime} ->
-        notify_subscribers(subscribers, new_mtime)
+        notify_subscribers(state, new_mtime)
 
-        {:noreply, %{state | mtime: new_mtime}}
+        {:noreply, State.update_mtime(state, mtime)}
     end
   end
 
-  defp notify_subscribers(subscribers, mtime) do
-    Enum.each(subscribers, fn subscriber ->
-      send(subscriber, {:file_updated, self(), mtime})
-    end)
-  end
-
-  defp remove_subscriber(subscribers, subscriber) do
-    Enum.filter(subscribers, &(&1 !== subscriber))
+  defp notify_subscribers(state, mtime) do
+    State.each_subscribers(state, &send(&1, {:file_updated, self(), mtime}))
   end
 end
