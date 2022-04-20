@@ -1,4 +1,4 @@
-name: Lint with Credo
+name: Credo
 
 on: [pull_request]
 
