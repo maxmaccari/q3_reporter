@@ -1,4 +1,7 @@
 # Q3Reporter
+![Format](https://github.com/maxmaccari/q3_reporter/actions/workflows/check-format.yml/badge.svg)
+![Credo](https://github.com/maxmaccari/q3_reporter/actions/workflows/lint.yml/badge.svg)
+![Tests](https://github.com/maxmaccari/q3_reporter/actions/workflows/run-tests.yml/badge.svg)
 
 **Generate a report base on a Quake 3 log**
 
