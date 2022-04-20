@@ -1,0 +1,30 @@
+name: Run Tests
+
+on: [pull_request]
+
+jobs:
+  check_format:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp: ['24']
+        elixir: ['1.13']
+    steps:
+      - uses: actions/checkout@v3
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+
+      - uses: actions/cache@v3
+        id: mix-run-tests
+        with:
+          path: deps
+          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock'))}}
+
+      - name: Install Mix Dependencies
+        if: steps.mix-run-tests.outputs.cache-hit != 'true'
+        run: mix deps.get
+
+      - name: Run tests and coverage
+        run: mix coveralls.html
