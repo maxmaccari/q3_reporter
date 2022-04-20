@@ -76,4 +76,28 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
       assert_receive {:file_updated, ^file, _mtime}, 200
     end
   end
+
+  describe "Server.subscribed?/2" do
+    setup :start_server
+
+    test "check if pid is subscribed to a file", %{watched: file} do
+      refute Server.subscribed?(file)
+
+      Server.subscribe(file)
+
+      assert Server.subscribed?(file)
+    end
+
+    test "check if pid is unsubscribed if process is not alive", %{watched: file} do
+      task = Task.async(fn -> Server.subscribe(file) end)
+      Task.await(task)
+      Server.subscribe(file)
+
+      touch_example()
+
+      assert_receive {:file_updated, _, _}, 200
+      assert Server.subscribed?(file, self())
+      refute Server.subscribed?(file, task.pid)
+    end
+  end
 end

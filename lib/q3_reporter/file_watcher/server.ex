@@ -21,6 +21,11 @@ defmodule Q3Reporter.FileWatcher.Server do
     GenServer.call(file, :subscribe)
   end
 
+  @spec subscribed?(pid) :: boolean()
+  def subscribed?(file, pid \\ self()) do
+    GenServer.call(file, {:subscribed?, pid})
+  end
+
   @spec unsubscribe(pid) :: :ok
   def unsubscribe(file) do
     GenServer.call(file, :unsubscribe)
@@ -53,8 +58,15 @@ defmodule Q3Reporter.FileWatcher.Server do
   end
 
   @impl true
+  def handle_call({:subscribed?, subscriber}, _, state) do
+    {:reply, State.subscribed?(state, subscriber), state}
+  end
+
+  @impl true
   def handle_info(:tick, state) do
     %{mtime: mtime, path: path} = state
+
+    state = unsubscribe_dead_processes(state)
 
     case File.stat!(path) do
       %{mtime: ^mtime} ->
@@ -69,5 +81,9 @@ defmodule Q3Reporter.FileWatcher.Server do
 
   defp notify_subscribers(state, mtime) do
     State.each_subscribers(state, &send(&1, {:file_updated, self(), mtime}))
+  end
+
+  defp unsubscribe_dead_processes(state) do
+    State.unsubscribe_by(state, &(!Process.alive?(&1)))
   end
 end
