@@ -1,0 +1,57 @@
+name: Tests
+
+on: [pull_request]
+
+jobs:
+  run_tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp: ['24']
+        elixir: ['1.13']
+    steps:
+      - uses: actions/checkout@v3
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+
+      - uses: actions/cache@v3
+        id: mix-run-tests
+        with:
+          path: deps
+          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock'))}}
+
+      - name: Install Mix Dependencies
+        if: steps.mix-run-tests.outputs.cache-hit != 'true'
+        run: mix deps.get
+
+      - name: Run tests and coverage
+        run: 
+          mix coveralls.html
+
+      - name: Extract Coverage Stats
+        run: |
+          COVERALLS_OUTPUT=$(mix coveralls.html)
+          COVERAGE=$(echo $COVERALLS_OUTPUT | grep "\[TOTAL\]" | grep -Po "[0-9]+\.[0-9]*%")
+          COVERAGE_COLOR=$(echo $COVERAGE | grep -Po "^[0-9]+")
+          echo "COVERAGE=$(echo $COVERAGE | cut -c 1-6)" >> $GITHUB_ENV
+          echo "COVERAGE_COLOR=$(echo $COVERAGE_COLOR | cut -c 1-6)" >> $GITHUB_ENV
+
+      - name: Create Coverage Badge
+        uses: schneegans/dynamic-badges-action@v1.3.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: d32b12d3978f7d2a6b27b6ec5c275040
+          filename: q3_reporter_coverage.json
+          label: Coverage
+          namedLogo: coveralls.svg
+          message: ${{ env.COVERAGE }}
+          valColorRange: ${{ env.COVERAGE_COLOR }}
+          maxColorRange: 100
+          minColorRange: 50
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: cover

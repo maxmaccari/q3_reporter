@@ -1,0 +1,35 @@
+name: Dialyzer
+
+on: [pull_request]
+
+jobs:
+  run_dialyzer:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp: ['24']
+        elixir: ['1.13']
+    steps:
+      - uses: actions/checkout@v3
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+
+      - uses: actions/cache@v3
+        id: mix-run-dialyzer
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock'))}}
+
+      - name: Install Mix Dependencies
+        if: steps.mix-run-tests.outputs.cache-hit != 'true'
+        run: mix deps.get
+
+      - name: Compile the project
+        run: mix compile
+
+      - name: Run dialyzer
+        run: mix dialyzer
