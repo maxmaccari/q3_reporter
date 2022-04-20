@@ -2,6 +2,7 @@
 ![Format](https://github.com/maxmaccari/q3_reporter/actions/workflows/check-format.yml/badge.svg)
 ![Credo](https://github.com/maxmaccari/q3_reporter/actions/workflows/lint.yml/badge.svg)
 ![Tests](https://github.com/maxmaccari/q3_reporter/actions/workflows/run-tests.yml/badge.svg)
+![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/maxmaccari/d32b12d3978f7d2a6b27b6ec5c275040/raw/q3_reporter_coverage.json)
 
 **Generate a report base on a Quake 3 log**
 
