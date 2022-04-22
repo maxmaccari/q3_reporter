@@ -36,6 +36,15 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
     end
   end
 
+  describe "Server.close/1" do
+    setup :start_server
+
+    test "close the given file", %{watched: file} do
+      Server.close(file)
+      refute Process.alive?(file)
+    end
+  end
+
   describe "Server.subscribe/1" do
     setup :start_server
 

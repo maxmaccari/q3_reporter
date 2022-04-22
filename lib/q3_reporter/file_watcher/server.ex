@@ -31,6 +31,11 @@ defmodule Q3Reporter.FileWatcher.Server do
     GenServer.call(file, :unsubscribe)
   end
 
+  @spec close(pid) :: :ok
+  def close(pid) do
+    GenServer.stop(pid)
+  end
+
   # Server Callbacks
 
   @impl true
@@ -75,7 +80,7 @@ defmodule Q3Reporter.FileWatcher.Server do
       %{mtime: new_mtime} ->
         notify_subscribers(state, new_mtime)
 
-        {:noreply, State.update_mtime(state, mtime)}
+        {:noreply, State.update_mtime(state, new_mtime)}
     end
   end
 
