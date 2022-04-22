@@ -4,13 +4,7 @@ defmodule Q3Reporter.FileWatcherTest do
   alias Q3Reporter.FileWatcher
   alias Q3Reporter.FileWatcher.Supervisor
 
-  @example_file Path.join(__DIR__, "./.temp_log")
-
-  defp create_example,
-    do: File.touch(@example_file, {{2022, 1, 1}, {0, 0, 0}})
-
-  defp touch_example, do: File.touch(@example_file)
-  defp delete_example, do: File.rm(@example_file)
+  import Support.FileWatchHelpers
 
   describe "FileWatcher" do
     setup context do
@@ -24,7 +18,7 @@ defmodule Q3Reporter.FileWatcherTest do
         DynamicSupervisor.stop(Supervisor)
       end)
 
-      Map.put(context, :path, @example_file)
+      Map.put(context, :path, example_path())
     end
 
     test "open a file and subscribe to it changes", %{path: path} do

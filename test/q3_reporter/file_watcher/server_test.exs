@@ -3,22 +3,16 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
 
   alias Q3Reporter.FileWatcher.Server
 
-  @example_file Path.join(__DIR__, "./.temp_log")
+  import Support.FileWatchHelpers
 
-  defp create_example,
-    do: File.touch(@example_file, {{2022, 1, 1}, {0, 0, 0}})
-
-  defp touch_example, do: File.touch(@example_file)
-  defp delete_example, do: File.rm(@example_file)
-
-  def start_server(context) do
+  def watch_example(context) do
     create_example()
 
     on_exit(fn ->
       delete_example()
     end)
 
-    {:ok, file} = start_supervised({Server, [@example_file]})
+    {:ok, file} = start_supervised({Server, [example_path()]})
 
     Map.put(context, :watched, file)
   end
@@ -37,7 +31,7 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
   end
 
   describe "Server.close/1" do
-    setup :start_server
+    setup :watch_example
 
     test "close the given file", %{watched: file} do
       Server.close(file)
@@ -46,7 +40,7 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
   end
 
   describe "Server.subscribe/1" do
-    setup :start_server
+    setup :watch_example
 
     test "receive a message when the file change", %{watched: file} do
       assert :ok = Server.subscribe(file)
@@ -64,7 +58,7 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
   end
 
   describe "Server.unsubscribe/1" do
-    setup :start_server
+    setup :watch_example
 
     test "receive a message when the file changes", %{watched: file} do
       assert :ok = Server.subscribe(file)
@@ -87,7 +81,7 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
   end
 
   describe "Server.subscribed?/2" do
-    setup :start_server
+    setup :watch_example
 
     test "check if pid is subscribed to a file", %{watched: file} do
       refute Server.subscribed?(file)

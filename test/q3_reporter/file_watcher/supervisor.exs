@@ -3,13 +3,7 @@ defmodule Q3Reporter.FileWatcher.SupervisorTest do
 
   alias Q3Reporter.FileWatcher
 
-  @example_file Path.join(__DIR__, "./.temp_log")
-
-  defp create_example,
-    do: File.touch(@example_file, {{2022, 1, 1}, {0, 0, 0}})
-
-  defp touch_example, do: File.touch(@example_file)
-  defp delete_example, do: File.rm(@example_file)
+  import Support.FileWatchHelpers
 
   describe "FileWatcher.Supervisor" do
     setup context do
@@ -21,7 +15,7 @@ defmodule Q3Reporter.FileWatcher.SupervisorTest do
         delete_example()
       end)
 
-      Map.put(context, :path, @example_file)
+      Map.put(context, :path, example_path())
     end
 
     test "start_child/1 start Server with the file path", %{path: path} do
