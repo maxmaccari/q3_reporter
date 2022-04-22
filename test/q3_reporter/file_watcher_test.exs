@@ -16,7 +16,7 @@ defmodule Q3Reporter.FileWatcherTest do
     setup context do
       create_example()
 
-      Supervisor.start_link()
+      FileWatcher.start_link()
 
       on_exit(fn ->
         delete_example()

@@ -5,7 +5,7 @@ defmodule Q3Reporter.Application do
 
   def start(_type, _args) do
     children = [
-      {Q3Reporter.FileWatcher.Supervisor, []}
+      {Q3Reporter.FileWatcher, []}
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)

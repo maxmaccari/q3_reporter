@@ -4,7 +4,7 @@ defmodule Q3Reporter.FileWatcher do
 
   You start Q3Reporter.FileWatcher directly in your supervision tree:
 
-      {Q3Reporter.FileWatcher.Supervisor, []}
+      {Q3Reporter.FileWatcher, []}
 
   You can now use the functions in this module to open and subscribe for file changes:
 
@@ -59,4 +59,12 @@ defmodule Q3Reporter.FileWatcher do
   Close the watched file. So it changes won't be monitored anymore
   """
   defdelegate close(pid), to: Server
+
+  @doc false
+  defdelegate start_link(opts \\ []), to: Supervisor
+
+  # coveralls-ignore-start
+  @doc false
+  defdelegate child_spec(params), to: Supervisor
+  # coveralls-ignore-end
 end
