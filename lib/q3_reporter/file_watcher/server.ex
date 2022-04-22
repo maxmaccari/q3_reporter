@@ -1,7 +1,7 @@
 defmodule Q3Reporter.FileWatcher.Server do
   @moduledoc false
 
-  @timeout 100
+  @timeout Application.compile_env(:q3_reporter, [Q3Reporter.FileWatcher, :timeout], 1_000)
 
   use GenServer
 
