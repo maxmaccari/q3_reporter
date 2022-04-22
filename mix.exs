@@ -28,6 +28,7 @@ defmodule Q3Reporter.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
+      mod: {Q3Reporter.Application, []},
       extra_applications: [:logger, :eex]
     ]
   end

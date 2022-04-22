@@ -20,6 +20,8 @@ defmodule Q3Reporter.FileWatcherTest do
 
       on_exit(fn ->
         delete_example()
+
+        DynamicSupervisor.stop(Supervisor)
       end)
 
       Map.put(context, :path, @example_file)
