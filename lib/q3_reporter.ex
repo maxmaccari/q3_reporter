@@ -24,7 +24,7 @@ defmodule Q3Reporter do
           {:ok, Results.t()} | {:error, String.t()}
   def parse(path, opts \\ []) do
     with {:ok, content} <- File.read(path),
-         results <- Core.interpret_log(content, opts) do
+         results <- Core.log_to_results(content, opts[:mode]) do
       {:ok, results}
     else
       {:error, :enoent} ->
