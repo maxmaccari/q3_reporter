@@ -20,7 +20,9 @@ defmodule Q3Reporter.Log.ETSAdapter do
   end
 
   def init(), do: :ets.new(@table, [:named_table, :set, :public])
+
   def close(), do: :ets.delete(@table)
+  def close(name), do: :ets.delete(@table, name)
 
   def push(name, content \\ "", mtime \\ NaiveDateTime.utc_now()) do
     :ets.insert(@table, {name, content, mtime})

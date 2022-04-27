@@ -4,23 +4,13 @@ defmodule Q3Reporter.Log.ETSAdapterTest do
   alias Q3Reporter.Log
   alias Q3Reporter.Log.ETSAdapter
 
-  setup_all do
-    ETSAdapter.init()
-
-    on_exit(fn ->
-      try do
-        ETSAdapter.close()
-      rescue
-        _ -> :ignore
-      end
-    end)
-
-    :ok
-  end
-
   setup context do
     name = :crypto.strong_rand_bytes(10) |> Base.encode64(padding: false)
     ETSAdapter.push(name, "", NaiveDateTime.new!(2022, 1, 1, 0, 0, 0))
+
+    on_exit(fn ->
+      ETSAdapter.close(name)
+    end)
 
     Map.put(context, :name, name)
   end
