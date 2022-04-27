@@ -1,16 +1,12 @@
 defmodule Support.LogHelpers do
   alias Q3Reporter.Log.ETSAdapter
 
-  def create_log() do
-    name = :crypto.strong_rand_bytes(20) |> Base.encode64(padding: false)
-    ETSAdapter.push(name, "", NaiveDateTime.new!(2022, 1, 1, 0, 0, 0))
-
-    name
+  def random_log_path() do
+    :crypto.strong_rand_bytes(20) |> Base.encode64(padding: false)
   end
 
-  def create_log(name) do
+  def create_log(name \\ random_log_path()) do
     ETSAdapter.push(name, "", NaiveDateTime.new!(2022, 1, 1, 0, 0, 0))
-
     name
   end
 
