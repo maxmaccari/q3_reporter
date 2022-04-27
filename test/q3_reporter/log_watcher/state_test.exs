@@ -1,7 +1,7 @@
-defmodule Q3Reporter.FileWatcher.StateTest do
+defmodule Q3Reporter.LogWatcher.StateTest do
   use ExUnit.Case, async: true
 
-  alias Q3Reporter.FileWatcher.State
+  alias Q3Reporter.LogWatcher.State
 
   defp create_state do
     %State{
@@ -20,7 +20,7 @@ defmodule Q3Reporter.FileWatcher.StateTest do
     |> NaiveDateTime.to_erl()
   end
 
-  describe "FileWatcher.State" do
+  describe "LogWatcher.State" do
     test "new/1 create a new state" do
       mtime = :calendar.local_time()
       path = "example.log"

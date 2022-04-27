@@ -1,9 +1,9 @@
-defmodule Q3Reporter.FileWatcher.Supervisor do
+defmodule Q3Reporter.LogWatcher.Supervisor do
   @moduledoc false
 
   use DynamicSupervisor
 
-  alias Q3Reporter.FileWatcher.Server
+  alias Q3Reporter.LogWatcher.Server
 
   @spec start_link(keyword) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(opts \\ []) do

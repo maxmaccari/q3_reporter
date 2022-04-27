@@ -1,4 +1,4 @@
-defmodule Q3Reporter.FileWatcher.State do
+defmodule Q3Reporter.LogWatcher.State do
   @moduledoc false
 
   @typep date :: {integer, integer, integer}

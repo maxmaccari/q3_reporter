@@ -1,12 +1,12 @@
-defmodule Q3Reporter.FileWatcher.Server do
+defmodule Q3Reporter.LogWatcher.Server do
   @moduledoc false
 
-  @timeout Application.compile_env(:q3_reporter, [Q3Reporter.FileWatcher, :timeout], 1_000)
+  @timeout Application.compile_env(:q3_reporter, [Q3Reporter.LogWatcher, :timeout], 1_000)
 
   use GenServer
 
   alias Q3Reporter.Log
-  alias Q3Reporter.FileWatcher.State
+  alias Q3Reporter.LogWatcher.State
 
   @type state :: State.t()
 

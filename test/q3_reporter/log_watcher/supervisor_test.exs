@@ -1,11 +1,11 @@
-defmodule Q3Reporter.FileWatcher.SupervisorTest do
+defmodule Q3Reporter.LogWatcher.SupervisorTest do
   use ExUnit.Case, async: true
 
-  alias Q3Reporter.FileWatcher
+  alias Q3Reporter.LogWatcher
 
   import Support.LogHelpers
 
-  describe "FileWatcher.Supervisor" do
+  describe "LogWatcher.Supervisor" do
     setup context do
       path = create_log()
 
@@ -17,7 +17,7 @@ defmodule Q3Reporter.FileWatcher.SupervisorTest do
     end
 
     test "start_child/1 start Server with the file path", %{path: path} do
-      assert {:ok, file} = FileWatcher.Supervisor.start_child(path)
+      assert {:ok, file} = LogWatcher.Supervisor.start_child(path)
       assert Process.alive?(file)
     end
   end
