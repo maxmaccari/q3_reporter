@@ -7,6 +7,8 @@ defmodule Q3Reporter do
   alias Q3Reporter.Core
   alias Q3Reporter.Core.Results
 
+  @type opts :: keyword()
+
   @doc """
   Parse a log content into a `Q3Reporter.Core.Results` structure from a file.
 
@@ -21,10 +23,10 @@ defmodule Q3Reporter do
       :games => [ %Q3Reporter.Core.Game{...} ]
     }}
   """
-  @spec parse(String.t(), Core.opts()) ::
+  @spec parse(String.t(), opts()) ::
           {:ok, Results.t()} | {:error, String.t()}
   def parse(path, opts \\ []) do
-    with {:ok, content} <- Log.read(path),
+    with {:ok, content} <- Log.read(path, opts[:log_adapter]),
          results <- Core.log_to_results(content, opts[:mode]) do
       {:ok, results}
     else
