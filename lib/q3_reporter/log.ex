@@ -13,6 +13,6 @@ defmodule Q3Reporter.Log do
   def read(path, adapter), do: adapter.read(path)
 
   def mtime(path, adapter \\ @default_adapter)
-  def mtime(path, adapter) when is_nil(adapter), do: adapter.mtime(path)
+  def mtime(path, adapter) when is_nil(adapter), do: @default_adapter.mtime(path)
   def mtime(path, adapter), do: adapter.mtime(path)
 end

@@ -2,7 +2,7 @@ defmodule Support.LogHelpers do
   alias Q3Reporter.Log.ETSAdapter
 
   def random_log_path() do
-    :crypto.strong_rand_bytes(20) |> Base.encode64(padding: false)
+    :crypto.strong_rand_bytes(50) |> Base.url_encode64(padding: false)
   end
 
   def create_log(name \\ random_log_path()) do

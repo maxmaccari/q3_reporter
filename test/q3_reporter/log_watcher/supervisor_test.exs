@@ -16,7 +16,7 @@ defmodule Q3Reporter.LogWatcher.SupervisorTest do
   end
 
   test "should start Server for the given file path", %{path: path} do
-    assert {:ok, file} = LogWatcher.Supervisor.start_child(path)
+    assert {:ok, file} = LogWatcher.Supervisor.start_child(path: path)
     assert Process.alive?(file)
   end
 end

@@ -7,7 +7,8 @@ defmodule Q3Reporter.LogWatcher.StateTest do
     %State{
       path: "example.log",
       mtime: :calendar.local_time(),
-      subscribers: []
+      subscribers: [],
+      log_adapter: nil
     }
   end
 

@@ -5,16 +5,15 @@ defmodule Q3Reporter.LogWatcher.Supervisor do
 
   alias Q3Reporter.LogWatcher.Server
 
-  @spec start_link(keyword) :: :ignore | {:error, any} | {:ok, pid}
+  @spec start_link(keyword) :: Supervisor.on_start()
   def start_link(opts \\ []) do
     opts = Keyword.put_new(opts, :name, __MODULE__)
     DynamicSupervisor.start_link(__MODULE__, [], opts)
   end
 
-  @spec start_child(atom | pid | {atom, any} | {:via, atom, any}, String.t()) ::
-          :ignore | {:error, any} | {:ok, pid} | {:ok, pid, any}
-  def start_child(sup \\ __MODULE__, path) do
-    DynamicSupervisor.start_child(sup, {Server, path})
+  @spec start_child(GenServer.name(), keyword()) :: DynamicSupervisor.on_start_child()
+  def start_child(sup \\ __MODULE__, opts) do
+    DynamicSupervisor.start_child(sup, {Server, opts})
   end
 
   @impl true

@@ -8,10 +8,11 @@ defmodule Q3Reporter.LogWatcher.State do
   @type t :: %__MODULE__{
           mtime: erl_datetime(),
           path: String.t(),
-          subscribers: list(pid())
+          subscribers: list(pid()),
+          log_adapter: atom() | nil
         }
 
-  defstruct path: nil, mtime: nil, subscribers: []
+  defstruct path: nil, mtime: nil, subscribers: [], log_adapter: nil
 
   @spec new(path: String.t(), mtime: erl_datetime()) :: t()
   def new(opts) do

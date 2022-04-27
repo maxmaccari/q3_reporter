@@ -16,21 +16,25 @@ defmodule Q3Reporter.LogWatcher.ServerTest do
   end
 
   def watch_example(context) do
-    {:ok, file} = start_supervised({Server, context.path})
+    {:ok, file} = start_supervised({Server, path: context.path})
 
     Map.put(context, :watched, file)
   end
 
-  describe "Server.start_link/2" do
+  describe "Server.start_link/1" do
     setup :create_example
 
     test "with a valid file", %{path: path} do
-      assert {:ok, pid} = Server.start_link(path)
+      assert {:ok, pid} = Server.start_link(path: path)
       assert Process.alive?(pid)
     end
 
     test "with invalid file" do
-      assert {:error, :enoent} = Server.start_link("invalid")
+      assert {:error, :enoent} = Server.start_link(path: "invalid")
+    end
+
+    test "with no path" do
+      assert {:error, "path is required"} = Server.start_link()
     end
   end
 
@@ -108,6 +112,33 @@ defmodule Q3Reporter.LogWatcher.ServerTest do
       assert_receive {:file_updated, _, _}, 200
       assert Server.subscribed?(file, self())
       refute Server.subscribed?(file, task.pid)
+    end
+  end
+
+  describe "with FileAdapter" do
+    alias Q3Reporter.Log.FileAdapter
+
+    setup context do
+      path = "./.#{random_log_path()}"
+      File.touch!(path, {{2022, 1, 1}, {0, 0, 0}})
+
+      {:ok, file} = start_supervised({Server, path: path, log_adapter: FileAdapter})
+
+      on_exit(fn ->
+        File.rm(path)
+      end)
+
+      context
+      |> Map.put(:path, path)
+      |> Map.put(:watched, file)
+    end
+
+    test "should work properly", %{path: path, watched: file} do
+      assert :ok = Server.subscribe(file)
+
+      File.touch(path)
+
+      assert_receive {:file_updated, ^file, _mtime}, 200
     end
   end
 end

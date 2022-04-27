@@ -12,9 +12,12 @@ defmodule Q3Reporter.LogWatcher.Server do
 
   # Client
 
-  @spec start_link(String.t(), keyword()) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(path, opts \\ []) do
-    GenServer.start_link(__MODULE__, path, opts)
+  @spec start_link(keyword()) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(opts \\ []) do
+    case Keyword.fetch(opts, :path) do
+      {:ok, _path} -> GenServer.start_link(__MODULE__, opts, opts)
+      _ -> {:error, "path is required"}
+    end
   end
 
   @spec subscribe(pid) :: :ok
@@ -40,16 +43,13 @@ defmodule Q3Reporter.LogWatcher.Server do
   # Server Callbacks
 
   @impl true
-  @spec init(String.t()) :: {:ok, state} | {:stop, atom()}
-  def init(path) do
-    case Log.mtime(path) do
-      {:ok, mtime} ->
-        :timer.send_interval(@timeout, :tick)
+  @spec init(keyword) :: {:ok, state} | {:stop, atom()}
+  def init(opts) do
+    :timer.send_interval(@timeout, :tick)
 
-        {:ok, State.new(path: path, mtime: mtime)}
-
-      {:error, reason} ->
-        {:stop, reason}
+    case initialize_state(opts) do
+      {:error, reason} -> {:stop, reason}
+      state -> {:ok, state}
     end
   end
 
@@ -70,11 +70,11 @@ defmodule Q3Reporter.LogWatcher.Server do
 
   @impl true
   def handle_info(:tick, state) do
-    %{mtime: mtime, path: path} = state
+    %{mtime: mtime, path: path, log_adapter: log_adapter} = state
 
     state = unsubscribe_dead_processes(state)
 
-    case Log.mtime(path) do
+    case Log.mtime(path, log_adapter) do
       {:ok, ^mtime} ->
         {:noreply, state}
 
@@ -91,5 +91,13 @@ defmodule Q3Reporter.LogWatcher.Server do
 
   defp unsubscribe_dead_processes(state) do
     State.unsubscribe_by(state, &(!Process.alive?(&1)))
+  end
+
+  defp initialize_state(opts) do
+    with {:ok, mtime} <- Log.mtime(opts[:path], opts[:log_adapter]) do
+      opts
+      |> Keyword.put(:mtime, mtime)
+      |> State.new()
+    end
   end
 end

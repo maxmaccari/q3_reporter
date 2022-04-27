@@ -29,8 +29,11 @@ defmodule Q3Reporter.LogWatcher do
   @doc """
   Open a file to be monitored for the given `path`.
   """
-  @spec open(String.t()) :: :ignore | {:error, any} | {:ok, pid} | {:ok, pid, any}
-  defdelegate open(path), to: Supervisor, as: :start_child
+  @spec open(String.t(), keyword()) :: DynamicSupervisor.on_start_child()
+  def open(path, opts \\ []) do
+    opts = Keyword.put(opts, :path, path)
+    Supervisor.start_child(opts)
+  end
 
   @spec subscribed?(pid, pid) :: boolean()
   @doc """
