@@ -33,6 +33,18 @@ defmodule Q3Reporter.LogWatcher.ServerTest do
       assert {:error, :enoent} = Server.start_link(path: "invalid")
     end
 
+    test "should exit on deleted path", %{path: path} do
+      Process.flag(:trap_exit, true)
+
+      assert {:ok, pid} = Server.start_link(path: path)
+
+      delete_log(path)
+
+      assert_receive {:EXIT, ^pid, {:shutdown, {:error, :enoent}}}
+
+      Process.flag(:trap_exit, false)
+    end
+
     test "with no path" do
       assert {:error, "path is required"} = Server.start_link()
     end

@@ -82,6 +82,9 @@ defmodule Q3Reporter.LogWatcher.Server do
         notify_subscribers(state, new_mtime)
 
         {:noreply, State.update_mtime(state, new_mtime)}
+
+      {:error, _reason} = error ->
+        {:stop, {:shutdown, error}, state}
     end
   end
 
