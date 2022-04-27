@@ -3,6 +3,7 @@ defmodule Q3Reporter do
   Module that contains the logic for parsing Quake 3 logs.
   """
 
+  alias Q3Reporter.Log
   alias Q3Reporter.Core
   alias Q3Reporter.Core.Results
 
@@ -23,7 +24,7 @@ defmodule Q3Reporter do
   @spec parse(String.t(), Core.opts()) ::
           {:ok, Results.t()} | {:error, String.t()}
   def parse(path, opts \\ []) do
-    with {:ok, content} <- File.read(path),
+    with {:ok, content} <- Log.read(path),
          results <- Core.log_to_results(content, opts[:mode]) do
       {:ok, results}
     else

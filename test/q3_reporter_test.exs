@@ -1,19 +1,32 @@
 defmodule Q3ReporterTest do
-  use ExUnit.Case
+  use ExUnit.Case, asyc: true
 
   alias Q3Reporter
   alias Q3Reporter.Core.Results
 
-  describe "Q3Reporter.parse/2" do
-    @path Path.join(__DIR__, "./fixtures/example.log")
+  import Support.LogHelpers
 
-    test "with valid file and default mode" do
-      assert {:ok, results} = Q3Reporter.parse(@path, mode: :by_game)
+  describe "Q3Reporter.parse/2" do
+    @content Path.join(__DIR__, "./fixtures/example.log") |> File.read!()
+
+    setup context do
+      path = create_log()
+      push_log(path, @content)
+
+      on_exit(fn ->
+        delete_log(path)
+      end)
+
+      Map.put(context, :path, path)
+    end
+
+    test "with valid file and default mode", %{path: path} do
+      assert {:ok, results} = Q3Reporter.parse(path, mode: :by_game)
       assert %Results{entries: [%{}], mode: :by_game} = results
     end
 
-    test "with valid file and ranking mode" do
-      assert {:ok, results} = Q3Reporter.parse(@path, mode: :ranking)
+    test "with valid file and ranking mode", %{path: path} do
+      assert {:ok, results} = Q3Reporter.parse(path, mode: :ranking)
       assert %Results{entries: [%{}], mode: :ranking} = results
     end
 
