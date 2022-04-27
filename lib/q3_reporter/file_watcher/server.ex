@@ -5,6 +5,7 @@ defmodule Q3Reporter.FileWatcher.Server do
 
   use GenServer
 
+  alias Q3Reporter.Log
   alias Q3Reporter.FileWatcher.State
 
   @type state :: State.t()
@@ -41,8 +42,8 @@ defmodule Q3Reporter.FileWatcher.Server do
   @impl true
   @spec init(String.t()) :: {:ok, state} | {:stop, atom()}
   def init(path) do
-    case File.stat(path) do
-      {:ok, %{mtime: mtime}} ->
+    case Log.mtime(path) do
+      {:ok, mtime} ->
         :timer.send_interval(@timeout, :tick)
 
         {:ok, State.new(path: path, mtime: mtime)}
@@ -73,11 +74,11 @@ defmodule Q3Reporter.FileWatcher.Server do
 
     state = unsubscribe_dead_processes(state)
 
-    case File.stat!(path) do
-      %{mtime: ^mtime} ->
+    case Log.mtime(path) do
+      {:ok, ^mtime} ->
         {:noreply, state}
 
-      %{mtime: new_mtime} ->
+      {:ok, new_mtime} ->
         notify_subscribers(state, new_mtime)
 
         {:noreply, State.update_mtime(state, new_mtime)}

@@ -1,5 +1,5 @@
 defmodule Q3Reporter.Log.ETSAdapterTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Q3Reporter.Log
   alias Q3Reporter.Log.ETSAdapter

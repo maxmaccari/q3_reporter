@@ -1,5 +1,5 @@
 defmodule Q3Reporter.FileWatcher.StateTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Q3Reporter.FileWatcher.State
 

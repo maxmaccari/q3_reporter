@@ -14,7 +14,7 @@ defmodule Q3Reporter.FileWatcher.Supervisor do
   @spec start_child(atom | pid | {atom, any} | {:via, atom, any}, String.t()) ::
           :ignore | {:error, any} | {:ok, pid} | {:ok, pid, any}
   def start_child(sup \\ __MODULE__, path) do
-    DynamicSupervisor.start_child(sup, {Server, [path]})
+    DynamicSupervisor.start_child(sup, {Server, path})
   end
 
   @impl true

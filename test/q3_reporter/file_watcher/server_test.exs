@@ -1,27 +1,31 @@
 defmodule Q3Reporter.FileWatcher.ServerTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   alias Q3Reporter.FileWatcher.Server
 
-  import Support.FileWatchHelpers
+  import Support.LogHelpers
 
-  def watch_example(context) do
-    create_example()
+  def create_example(context) do
+    path = create_log()
 
     on_exit(fn ->
-      delete_example()
+      delete_log(path)
     end)
 
-    {:ok, file} = start_supervised({Server, [example_path()]})
+    Map.put(context, :path, path)
+  end
+
+  def watch_example(context) do
+    {:ok, file} = start_supervised({Server, context.path})
 
     Map.put(context, :watched, file)
   end
 
   describe "Server.start_link/2" do
-    @valid_path Path.join(__DIR__, "../../fixtures/example.log")
+    setup :create_example
 
-    test "with a valid file" do
-      assert {:ok, pid} = Server.start_link(@valid_path)
+    test "with a valid file", %{path: path} do
+      assert {:ok, pid} = Server.start_link(path)
       assert Process.alive?(pid)
     end
 
@@ -31,7 +35,7 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
   end
 
   describe "Server.close/1" do
-    setup :watch_example
+    setup [:create_example, :watch_example]
 
     test "close the given file", %{watched: file} do
       Server.close(file)
@@ -40,12 +44,12 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
   end
 
   describe "Server.subscribe/1" do
-    setup :watch_example
+    setup [:create_example, :watch_example]
 
-    test "receive a message when the file change", %{watched: file} do
+    test "receive a message when the file change", %{watched: file, path: path} do
       assert :ok = Server.subscribe(file)
 
-      touch_example()
+      touch_log(path)
 
       assert_receive {:file_updated, ^file, _mtime}, 200
     end
@@ -58,30 +62,33 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
   end
 
   describe "Server.unsubscribe/1" do
-    setup :watch_example
+    setup [:create_example, :watch_example]
 
-    test "receive a message when the file changes", %{watched: file} do
+    test "receive a message when the file changes", %{watched: file, path: path} do
       assert :ok = Server.subscribe(file)
       assert :ok = Server.unsubscribe(file)
 
-      touch_example()
+      touch_log(path)
 
       refute_receive {:file_updated, ^file, _mtime}, 200
     end
 
-    test "receive a message when subscribe again and the file changes", %{watched: file} do
+    test "receive a message when subscribe again and the file changes", %{
+      watched: file,
+      path: path
+    } do
       assert :ok = Server.subscribe(file)
       assert :ok = Server.unsubscribe(file)
       assert :ok = Server.subscribe(file)
 
-      touch_example()
+      touch_log(path)
 
       assert_receive {:file_updated, ^file, _mtime}, 200
     end
   end
 
   describe "Server.subscribed?/2" do
-    setup :watch_example
+    setup [:create_example, :watch_example]
 
     test "check if pid is subscribed to a file", %{watched: file} do
       refute Server.subscribed?(file)
@@ -91,12 +98,12 @@ defmodule Q3Reporter.FileWatcher.ServerTest do
       assert Server.subscribed?(file)
     end
 
-    test "check if pid is unsubscribed if process is not alive", %{watched: file} do
+    test "check if pid is unsubscribed if process is not alive", %{watched: file, path: path} do
       task = Task.async(fn -> Server.subscribe(file) end)
       Task.await(task)
       Server.subscribe(file)
 
-      touch_example()
+      touch_log(path)
 
       assert_receive {:file_updated, _, _}, 200
       assert Server.subscribed?(file, self())
