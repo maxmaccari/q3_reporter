@@ -7,7 +7,8 @@ defmodule Q3Reporter.GameServer.State do
             games: [],
             by_game: nil,
             ranking: nil,
-            subscribers: []
+            subscribers: [],
+            log_adapter: nil
 
   @type mode :: :by_game | :ranking
 
@@ -17,7 +18,8 @@ defmodule Q3Reporter.GameServer.State do
           games: list(Game.t()),
           by_game: Results.t(),
           ranking: Results.t(),
-          subscribers: list({pid, mode})
+          subscribers: list({pid, mode}),
+          log_adapter: atom() | nil
         }
 
   @spec new(keyword) :: t
