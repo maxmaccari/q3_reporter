@@ -40,20 +40,25 @@ defmodule Q3Reporter.GameServer.Server do
   end
 
   def init(opts) do
-    {:ok, State.new(opts), {:continue, :watch_file}}
-  end
+    with {:ok, games} <- load_games(opts[:path], opts[:log_adapter]),
+         {:ok, watch_pid} <- watch_and_subscribe_to_log(opts[:path], opts[:log_adapter]) do
+      state =
+        opts
+        |> State.new()
+        |> State.set_games(games)
+        |> State.set_watch_pid(watch_pid)
 
-  def handle_continue(:watch_file, state) do
-    case watch_and_subscribe_to_log(state) do
-      {:error, _} = error -> {:stop, {:shutdown, error}, state}
-      state -> {:noreply, state, {:continue, :load_games}}
+      {:ok, state}
     end
   end
 
-  def handle_continue(:load_games, state) do
-    case load_games(state) do
-      {:error, reason} -> {:stop, reason}
-      state -> {:noreply, state, {:continue, :notify_subscribers}}
+  def handle_continue(:reload_games, %{path: path, log_adapter: adapter} = state) do
+    case load_games(path, adapter) do
+      {:ok, games} ->
+        {:noreply, State.set_games(state, games), {:continue, :notify_subscribers}}
+
+      {:stop, reason} ->
+        {:stop, reason, state}
     end
   end
 
@@ -64,7 +69,7 @@ defmodule Q3Reporter.GameServer.Server do
   end
 
   def handle_info({:file_updated, watch_pid, _}, %{watch_pid: watch_pid} = state) do
-    {:noreply, state, {:continue, :load_games}}
+    {:noreply, state, {:continue, :reload_games}}
   end
 
   def handle_info(
@@ -120,18 +125,23 @@ defmodule Q3Reporter.GameServer.Server do
     |> Stream.run()
   end
 
-  defp watch_and_subscribe_to_log(%{path: path, log_adapter: adapter} = state) do
-    with {:ok, watch_pid} <-
-           LogWatcher.open(path, log_adapter: adapter),
-         _ref <- Process.monitor(watch_pid),
-         :ok <- LogWatcher.subscribe(watch_pid),
-         do: State.set_watch_pid(state, watch_pid)
+  defp watch_and_subscribe_to_log(path, adapter) do
+    case LogWatcher.open(path, log_adapter: adapter) do
+      {:ok, watch_pid} ->
+        Process.monitor(watch_pid)
+        :ok = LogWatcher.subscribe(watch_pid)
+
+        {:ok, watch_pid}
+
+      {:error, reason} ->
+        {:stop, reason}
+    end
   end
 
-  defp load_games(%{path: path, log_adapter: adapter} = state) do
-    with {:ok, log} <- Log.read(path, adapter),
-         games <- Core.log_to_games(log) do
-      State.set_games(state, games)
+  defp load_games(path, adapter) do
+    case Log.read(path, adapter) do
+      {:ok, content} -> {:ok, Core.log_to_games(content)}
+      {:error, reason} -> {:stop, reason}
     end
   end
 end

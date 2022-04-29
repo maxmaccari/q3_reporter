@@ -25,7 +25,7 @@ defmodule Q3Reporter.GameServer.ServerTest do
   setup :with_log
 
   test "should start a server with the correct path", %{path: path} do
-    assert {:ok, pid} = Server.start_link(path: path)
+    assert {:ok, pid} = start_supervised({Server, path: path})
     assert Process.alive?(pid)
   end
 
@@ -35,12 +35,7 @@ defmodule Q3Reporter.GameServer.ServerTest do
 
   @invalid_path "invalid"
   test "should stop if the given path is invalid" do
-    Process.flag(:trap_exit, true)
-    assert {:ok, pid} = Server.start_link(path: @invalid_path)
-
-    assert_receive {:EXIT, ^pid, {:shutdown, {:error, :enoent}}}
-
-    Process.flag(:trap_exit, false)
+    assert {:error, :enoent} = Server.start_link(path: @invalid_path)
   end
 
   test "should stop if the given log is deleted" do
