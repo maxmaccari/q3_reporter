@@ -24,7 +24,8 @@ defmodule Q3Reporter.UpdateChecker do
 
   """
 
-  alias Q3Reporter.UpdateChecker.{Server, Supervisor}
+  alias Q3Reporter.UpdateChecker.Server
+  alias Q3Reporter.UpdateChecker.Supervisor, as: CheckerSupervisor
 
   @type checker :: Q3Reporter.UpdateChecker.State.checker()
 
@@ -38,42 +39,46 @@ defmodule Q3Reporter.UpdateChecker do
       |> Keyword.put(:path, path)
       |> Keyword.put(:checker, checker)
 
-    Supervisor.start_child(opts)
+    CheckerSupervisor.start_child(opts)
   end
 
-  @spec subscribed?(pid, pid) :: boolean()
   @doc """
   Check if the current process or the given `pid` is subscribed to the given
   `server_pid`.
   """
+  @spec subscribed?(pid, pid) :: boolean()
   defdelegate subscribed?(server_pid, pid \\ self()), to: Server
 
-  @spec subscribe(pid) :: :ok
   @doc """
   Subscribe to a monitoring modify server.
 
   The subscribed process receives messages when the file is updated
   in the following format:
 
-      {:file_updated, file_pid, mtime}
+  {:file_updated, file_pid, mtime}
   """
+  @spec subscribe(pid) :: :ok
   defdelegate subscribe(pid), to: Server
 
   @doc """
   Unsubscribe to a monitoring modify server. It reverts the `subscribe/1` effect.
   """
+  @spec unsubscribe(pid) :: :ok
   defdelegate unsubscribe(pid), to: Server
 
   @doc """
   Stop the monitoring server. So it changes won't be monitored anymore
   """
+  @spec stop(pid) :: :ok
   defdelegate stop(pid), to: Server
 
   # coveralls-ignore-start
   @doc false
-  defdelegate start_link(opts \\ []), to: Supervisor
+  @spec start_link(keyword) :: Supervisor.on_start()
+  defdelegate start_link(opts \\ []), to: CheckerSupervisor
 
   @doc false
-  defdelegate child_spec(params), to: Supervisor
+  @spec child_spec(keyword()) :: Supervisor.child_spec()
+  defdelegate child_spec(params), to: CheckerSupervisor
   # coveralls-ignore-end
 end
