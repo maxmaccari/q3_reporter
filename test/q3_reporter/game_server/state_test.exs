@@ -1,5 +1,5 @@
 defmodule Q3Reporter.GameServer.StateTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Q3Reporter.GameServer.State
   alias Q3Reporter.Core.{Game, Results}

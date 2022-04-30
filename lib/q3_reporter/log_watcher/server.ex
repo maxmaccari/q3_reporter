@@ -5,7 +5,6 @@ defmodule Q3Reporter.LogWatcher.Server do
 
   use GenServer
 
-  alias Q3Reporter.Log
   alias Q3Reporter.LogWatcher.State
 
   @type state :: State.t()
@@ -47,9 +46,12 @@ defmodule Q3Reporter.LogWatcher.Server do
   def init(opts) do
     :timer.send_interval(@timeout, :tick)
 
-    case initialize_state(opts) do
+    state = State.new(opts)
+
+    case State.check(state) do
+      :not_modified -> {:ok, state}
+      {:modified, new_state} -> {:ok, new_state}
       {:error, reason} -> {:stop, reason}
-      state -> {:ok, state}
     end
   end
 
@@ -70,37 +72,27 @@ defmodule Q3Reporter.LogWatcher.Server do
 
   @impl true
   def handle_info(:tick, state) do
-    %{mtime: mtime, path: path, log_adapter: log_adapter} = state
-
     state = unsubscribe_dead_processes(state)
 
-    case Log.mtime(path, log_adapter) do
-      {:ok, ^mtime} ->
+    case State.check(state) do
+      {:modified, state} ->
+        notify_subscribers(state)
+
         {:noreply, state}
 
-      {:ok, new_mtime} ->
-        notify_subscribers(state, new_mtime)
-
-        {:noreply, State.update_mtime(state, new_mtime)}
+      :not_modified ->
+        {:noreply, state}
 
       {:error, _reason} = error ->
         {:stop, {:shutdown, error}, state}
     end
   end
 
-  defp notify_subscribers(state, mtime) do
+  defp notify_subscribers(%{mtime: mtime} = state) do
     State.each_subscribers(state, &send(&1, {:file_updated, self(), mtime}))
   end
 
   defp unsubscribe_dead_processes(state) do
     State.unsubscribe_by(state, &(!Process.alive?(&1)))
-  end
-
-  defp initialize_state(opts) do
-    with {:ok, mtime} <- Log.mtime(opts[:path], opts[:log_adapter]) do
-      opts
-      |> Keyword.put(:mtime, mtime)
-      |> State.new()
-    end
   end
 end

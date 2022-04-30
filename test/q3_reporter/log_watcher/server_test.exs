@@ -5,152 +5,125 @@ defmodule Q3Reporter.LogWatcher.ServerTest do
 
   import Support.LogHelpers
 
-  def create_example(context) do
-    path = create_log()
+  def updating(context) do
+    checker = fn _path -> {:ok, NaiveDateTime.utc_now()} end
 
-    on_exit(fn ->
-      delete_log(path)
-    end)
-
-    Map.put(context, :path, path)
+    Map.put(context, :checker, checker)
   end
 
-  def watch_example(context) do
-    {:ok, file} = start_supervised({Server, path: context.path})
+  def non_updating(context) do
+    mtime = NaiveDateTime.utc_now()
+    checker = fn _path -> {:ok, mtime} end
 
-    Map.put(context, :watched, file)
+    context
+    |> Map.put(:checker, checker)
+    |> Map.put(:mtime, mtime)
   end
 
-  describe "Server.start_link/1" do
-    setup :create_example
+  def started(%{checker: checker} = context) do
+    path = random_log_path()
+    {:ok, pid} = start_supervised({Server, path: path, mtime: context[:mtime], checker: checker})
 
-    test "with a valid file", %{path: path} do
-      assert {:ok, pid} = Server.start_link(path: path)
-      assert Process.alive?(pid)
-    end
-
-    test "with invalid file" do
-      assert {:error, :enoent} = Server.start_link(path: "invalid")
-    end
-
-    test "should exit on deleted path", %{path: path} do
-      Process.flag(:trap_exit, true)
-
-      assert {:ok, pid} = Server.start_link(path: path)
-
-      delete_log(path)
-
-      assert_receive {:EXIT, ^pid, {:shutdown, {:error, :enoent}}}
-
-      Process.flag(:trap_exit, false)
-    end
-
-    test "with no path" do
-      assert {:error, "path is required"} = Server.start_link()
-    end
+    Map.put(context, :pid, pid)
   end
 
-  describe "Server.close/1" do
-    setup [:create_example, :watch_example]
+  def started(context), do: context |> updating() |> started()
 
-    test "close the given file", %{watched: file} do
-      Server.close(file)
-      refute Process.alive?(file)
-    end
+  test "should start a new server with valid path" do
+    path = random_log_path()
+    assert {:ok, pid} = Server.start_link(path: path)
+    assert Process.alive?(pid)
   end
 
-  describe "Server.subscribe/1" do
-    setup [:create_example, :watch_example]
-
-    test "receive a message when the file change", %{watched: file, path: path} do
-      assert :ok = Server.subscribe(file)
-
-      touch_log(path)
-
-      assert_receive {:file_updated, ^file, _mtime}, 200
-    end
-
-    test "dont't receive a message when the file doesn't change", %{watched: file} do
-      assert :ok = Server.subscribe(file)
-
-      refute_receive {:file_updated, ^file, _mtime}, 200
-    end
+  test "should not start with invalid path" do
+    assert {:error, "path is required"} = Server.start_link()
   end
 
-  describe "Server.unsubscribe/1" do
-    setup [:create_example, :watch_example]
-
-    test "receive a message when the file changes", %{watched: file, path: path} do
-      assert :ok = Server.subscribe(file)
-      assert :ok = Server.unsubscribe(file)
-
-      touch_log(path)
-
-      refute_receive {:file_updated, ^file, _mtime}, 200
-    end
-
-    test "receive a message when subscribe again and the file changes", %{
-      watched: file,
-      path: path
-    } do
-      assert :ok = Server.subscribe(file)
-      assert :ok = Server.unsubscribe(file)
-      assert :ok = Server.subscribe(file)
-
-      touch_log(path)
-
-      assert_receive {:file_updated, ^file, _mtime}, 200
-    end
+  test "should not start with invalid file" do
+    invalid_checker = fn _ -> {:error, :enoent} end
+    assert {:error, :enoent} = Server.start_link(path: "invalid", checker: invalid_checker)
   end
 
-  describe "Server.subscribed?/2" do
-    setup [:create_example, :watch_example]
+  test "should exit if file no longer exists" do
+    path = random_log_path()
+    {:ok, agent} = Agent.start(fn -> [NaiveDateTime.utc_now()] end)
 
-    test "check if pid is subscribed to a file", %{watched: file} do
-      refute Server.subscribed?(file)
-
-      Server.subscribe(file)
-
-      assert Server.subscribed?(file)
-    end
-
-    test "check if pid is unsubscribed if process is not alive", %{watched: file, path: path} do
-      task = Task.async(fn -> Server.subscribe(file) end)
-      Task.await(task)
-      Server.subscribe(file)
-
-      touch_log(path)
-
-      assert_receive {:file_updated, _, _}, 200
-      assert Server.subscribed?(file, self())
-      refute Server.subscribed?(file, task.pid)
-    end
-  end
-
-  describe "with FileAdapter" do
-    alias Q3Reporter.Log.FileAdapter
-
-    setup context do
-      path = "./.#{random_log_path()}"
-      File.touch!(path, {{2022, 1, 1}, {0, 0, 0}})
-
-      {:ok, file} = start_supervised({Server, path: path, log_adapter: FileAdapter})
-
-      on_exit(fn ->
-        File.rm(path)
+    checker = fn _path ->
+      Agent.get_and_update(agent, fn
+        [] -> {{:error, :enoent}, []}
+        [current | rest] -> {{:ok, current}, rest}
       end)
-
-      context
-      |> Map.put(:path, path)
-      |> Map.put(:watched, file)
     end
 
-    test "should work properly", %{path: path, watched: file} do
-      assert :ok = Server.subscribe(file)
+    Process.flag(:trap_exit, true)
+    assert {:ok, pid} = Server.start_link(path: path, checker: checker)
 
-      File.touch(path)
+    assert_receive {:EXIT, ^pid, {:shutdown, {:error, :enoent}}}
 
-      assert_receive {:file_updated, ^file, _mtime}, 200
+    Process.flag(:trap_exit, false)
+  end
+
+  test "should allow to close the given watched file" do
+    path = random_log_path()
+    assert {:ok, pid} = Server.start_link(path: path)
+
+    Server.close(pid)
+
+    refute Process.alive?(pid)
+  end
+
+  describe "with server started and updating" do
+    setup :started
+
+    test "should receive a message when the file is updated if subscribed", %{pid: pid} do
+      refute_receive {:file_updated, ^pid, _mtime}
+
+      assert :ok = Server.subscribe(pid)
+
+      assert_receive {:file_updated, ^pid, _mtime}
+    end
+
+    test "should allow unsubscribe", %{pid: pid} do
+      Server.subscribe(pid)
+
+      assert :ok = Server.unsubscribe(pid)
+
+      refute_receive {:file_updated, ^pid, _mtime}
+    end
+
+    test "should allow to check if the current process is subscribed", %{pid: pid} do
+      refute Server.subscribed?(pid)
+
+      Server.subscribe(pid)
+
+      assert Server.subscribed?(pid)
+    end
+
+    test "should unsubscribe dead processes automatically", %{pid: pid} do
+      task = Task.async(fn -> Server.subscribe(pid) end)
+      Task.await(task)
+      Server.subscribe(pid)
+
+      assert_receive {:file_updated, _, _}
+
+      assert Server.subscribed?(pid, self())
+      refute Server.subscribed?(pid, task.pid)
+    end
+
+    test "should allow to close the given watched file", %{pid: pid} do
+      Server.close(pid)
+      refute Process.alive?(pid)
+    end
+  end
+
+  describe "with server started and non updating" do
+    setup [:non_updating, :started]
+
+    test "should not receive a update message", %{pid: pid} do
+      assert :ok = Server.subscribe(pid)
+
+      refute_receive {:file_updated, ^pid, _mtime}, 200
+      assert Process.alive?(pid)
     end
   end
 end
