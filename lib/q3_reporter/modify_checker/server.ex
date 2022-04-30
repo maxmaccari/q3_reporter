@@ -34,8 +34,8 @@ defmodule Q3Reporter.ModifyChecker.Server do
     GenServer.call(file, :unsubscribe)
   end
 
-  @spec close(pid) :: :ok
-  def close(pid) do
+  @spec stop(pid) :: :ok
+  def stop(pid) do
     GenServer.stop(pid)
   end
 
@@ -89,7 +89,7 @@ defmodule Q3Reporter.ModifyChecker.Server do
   end
 
   defp notify_subscribers(%{mtime: mtime} = state) do
-    State.each_subscribers(state, &send(&1, {:file_updated, self(), mtime}))
+    State.each_subscribers(state, &send(&1, {:updated, self(), mtime}))
   end
 
   defp unsubscribe_dead_processes(state) do

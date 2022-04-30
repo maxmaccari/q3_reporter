@@ -35,16 +35,16 @@ defmodule Q3Reporter.ModifyChecker.ServerTest do
     assert Process.alive?(pid)
   end
 
-  test "should not start with invalid path" do
+  test "should not start with missing path" do
     assert {:error, "path is required"} = Server.start_link()
   end
 
-  test "should not start with invalid file" do
+  test "should not start with if checker return an error" do
     invalid_checker = fn _ -> {:error, :enoent} end
     assert {:error, :enoent} = Server.start_link(path: "invalid", checker: invalid_checker)
   end
 
-  test "should exit if file no longer exists" do
+  test "should exit after sucesfull startup if checker return an error" do
     path = random_log_path()
     {:ok, agent} = Agent.start(fn -> [NaiveDateTime.utc_now()] end)
 
@@ -63,24 +63,17 @@ defmodule Q3Reporter.ModifyChecker.ServerTest do
     Process.flag(:trap_exit, false)
   end
 
-  test "should allow to close the given watched file" do
-    path = random_log_path()
-    assert {:ok, pid} = Server.start_link(path: path)
-
-    Server.close(pid)
-
-    refute Process.alive?(pid)
-  end
-
   describe "with server started and updating" do
     setup :started
 
-    test "should receive a message when the file is updated if subscribed", %{pid: pid} do
-      refute_receive {:file_updated, ^pid, _mtime}
+    test "should receive a updated message when something is updated and it is subscribed", %{
+      pid: pid
+    } do
+      refute_receive {:updated, ^pid, _mtime}
 
       assert :ok = Server.subscribe(pid)
 
-      assert_receive {:file_updated, ^pid, _mtime}
+      assert_receive {:updated, ^pid, _mtime}
     end
 
     test "should allow unsubscribe", %{pid: pid} do
@@ -88,7 +81,7 @@ defmodule Q3Reporter.ModifyChecker.ServerTest do
 
       assert :ok = Server.unsubscribe(pid)
 
-      refute_receive {:file_updated, ^pid, _mtime}
+      refute_receive {:updated, ^pid, _mtime}
     end
 
     test "should allow to check if the current process is subscribed", %{pid: pid} do
@@ -104,14 +97,14 @@ defmodule Q3Reporter.ModifyChecker.ServerTest do
       Task.await(task)
       Server.subscribe(pid)
 
-      assert_receive {:file_updated, _, _}
+      assert_receive {:updated, _, _}
 
       assert Server.subscribed?(pid, self())
       refute Server.subscribed?(pid, task.pid)
     end
 
-    test "should allow to close the given watched file", %{pid: pid} do
-      Server.close(pid)
+    test "should allow to stop the given server", %{pid: pid} do
+      Server.stop(pid)
       refute Process.alive?(pid)
     end
   end
@@ -122,7 +115,7 @@ defmodule Q3Reporter.ModifyChecker.ServerTest do
     test "should not receive a update message", %{pid: pid} do
       assert :ok = Server.subscribe(pid)
 
-      refute_receive {:file_updated, ^pid, _mtime}, 200
+      refute_receive {:updated, ^pid, _mtime}, 200
       assert Process.alive?(pid)
     end
   end
