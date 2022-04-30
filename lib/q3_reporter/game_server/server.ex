@@ -132,9 +132,7 @@ defmodule Q3Reporter.GameServer.Server do
     with state <- State.new(opts),
          {:ok, state} <- State.start_watcher(state),
          :ok <- monitor_watcher(state),
-         {:ok, state} <- State.load_games(state) do
-      {:ok, state}
-    end
+         do: State.load_games(state)
   end
 
   defp monitor_watcher(%{watcher_pid: pid}) when is_pid(pid) do
