@@ -75,8 +75,6 @@ defmodule Q3Reporter.GameServer.Server do
     {:stop, {:shutdown, reason}, state}
   end
 
-  def handle_info(_, state), do: {:noreply, state}
-
   def handle_call({:subscribe, mode}, {subscriber, _}, state) do
     {:reply, :ok, State.subscribe(state, subscriber, mode)}
   end
