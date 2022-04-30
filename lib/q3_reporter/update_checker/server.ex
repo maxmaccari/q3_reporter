@@ -42,7 +42,6 @@ defmodule Q3Reporter.UpdateChecker.Server do
   # Server Callbacks
 
   @impl true
-  @spec init(keyword) :: {:ok, state} | {:stop, atom()}
   def init(opts) do
     :timer.send_interval(@timeout, :tick)
 

@@ -3,8 +3,8 @@ defmodule Q3Reporter.GameServer do
 
   @moduledoc false
 
-  alias Q3Reporter.GameServer.Supervisor, as: GameSupervisor
   alias Q3Reporter.GameServer.Server
+  alias Q3Reporter.GameServer.Supervisor, as: GameSupervisor
 
   def start(path, opts \\ []) do
     opts = Keyword.put(opts, :path, path)

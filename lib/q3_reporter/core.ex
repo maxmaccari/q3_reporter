@@ -36,7 +36,7 @@ defmodule Q3Reporter.Core do
     iex> Q3Reporter.Core.log_to_games("  0:00 InitGame:")
     [ %Q3Reporter.Core.Game{ initialized_at: ~T[00:00:00], players: %{} } ]
   """
-  @spec log_to_games(String.t()) :: list(Games.t())
+  @spec log_to_games(String.t()) :: list(Game.t())
   defdelegate log_to_games(content), to: Interpreter, as: :interpret
 
   @doc """

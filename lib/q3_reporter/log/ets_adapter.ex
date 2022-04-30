@@ -19,7 +19,7 @@ defmodule Q3Reporter.Log.ETSAdapter do
     end
   end
 
-  def init(), do: :ets.new(@table, [:named_table, :set, :public])
+  def init, do: :ets.new(@table, [:named_table, :set, :public])
 
   def close(name), do: :ets.delete(@table, name)
 

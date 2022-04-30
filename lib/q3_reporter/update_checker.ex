@@ -26,7 +26,7 @@ defmodule Q3Reporter.UpdateChecker do
 
   alias Q3Reporter.UpdateChecker.{Server, Supervisor}
 
-  @type checker :: UpdateChecker.State.checker()
+  @type checker :: Q3Reporter.UpdateChecker.State.checker()
 
   @doc """
   Open a file to be monitored for the given `path`.

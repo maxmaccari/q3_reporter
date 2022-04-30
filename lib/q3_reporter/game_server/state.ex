@@ -1,4 +1,6 @@
 defmodule Q3Reporter.GameServer.State do
+  @moduledoc false
+
   alias Q3Reporter.Core
   alias Q3Reporter.Core.{Game, Results}
 
