@@ -5,7 +5,7 @@ defmodule Q3Reporter.Application do
 
   def start(_type, _args) do
     children = [
-      Q3Reporter.LogWatcher.Supervisor,
+      Q3Reporter.ModifyChecker.Supervisor,
       Q3Reporter.GameServer
     ]
 

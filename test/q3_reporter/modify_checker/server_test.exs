@@ -1,7 +1,7 @@
-defmodule Q3Reporter.LogWatcher.ServerTest do
+defmodule Q3Reporter.ModifyChecker.ServerTest do
   use ExUnit.Case, async: true
 
-  alias Q3Reporter.LogWatcher.Server
+  alias Q3Reporter.ModifyChecker.Server
 
   import Support.LogHelpers
 

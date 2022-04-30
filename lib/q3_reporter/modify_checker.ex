@@ -1,30 +1,30 @@
-defmodule Q3Reporter.LogWatcher do
+defmodule Q3Reporter.ModifyChecker do
   @moduledoc """
   It is a service that monitor for file updates.
 
-  You start Q3Reporter.LogWatcher directly in your supervision tree:
+  You start Q3Reporter.ModifyChecker directly in your supervision tree:
 
-      {Q3Reporter.LogWatcher, []}
+      {Q3Reporter.ModifyChecker, []}
 
   You can now use the functions in this module to open and subscribe for file changes:
 
-      iex> Q3Reporter.LogWatcher
-      iex> {:ok, file} = LogWatcher.open("example")
+      iex> Q3Reporter.ModifyChecker
+      iex> {:ok, file} = ModifyChecker.open("example")
       {:ok, #PID<0, 100, 0>}
-      iex> LogWatcher.subscribe(file)
+      iex> ModifyChecker.subscribe(file)
       :ok
       iex> flush()
       {:file_updated, #PID<0.302.0>, {{2022, 4, 22}, {0, 40, 11}}}
       :ok
-      iex> LogWatcher.unsubscribe(file)
+      iex> ModifyChecker.unsubscribe(file)
       iex> flush()
       :ok
-      iex> LogWatcher.close(file)
+      iex> ModifyChecker.close(file)
       :ok
 
   """
 
-  alias Q3Reporter.LogWatcher.{Server, Supervisor}
+  alias Q3Reporter.ModifyChecker.{Server, Supervisor}
 
   @doc """
   Open a file to be monitored for the given `path`.

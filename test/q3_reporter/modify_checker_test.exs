@@ -1,28 +1,28 @@
-defmodule Q3Reporter.LogWatcherTest do
+defmodule Q3Reporter.ModifyCheckerTest do
   use ExUnit.Case, async: false
 
-  alias Q3Reporter.LogWatcher
+  alias Q3Reporter.ModifyChecker
 
   import Support.LogHelpers
 
   test "should open a file and subscribe to it changes" do
     path = create_log()
 
-    assert {:ok, file} = LogWatcher.open(path)
+    assert {:ok, file} = ModifyChecker.open(path)
 
-    assert :ok = LogWatcher.subscribe(file)
-    assert LogWatcher.subscribed?(file)
+    assert :ok = ModifyChecker.subscribe(file)
+    assert ModifyChecker.subscribed?(file)
 
     touch_log(path)
     assert_receive {:file_updated, ^file, _mtime}, 200
 
-    assert :ok = LogWatcher.unsubscribe(file)
-    refute LogWatcher.subscribed?(file)
+    assert :ok = ModifyChecker.unsubscribe(file)
+    refute ModifyChecker.subscribed?(file)
 
     touch_log(path)
     refute_receive {:file_updated, ^file, _mtime}, 200
 
-    :ok = LogWatcher.close(file)
+    :ok = ModifyChecker.close(file)
     refute Process.alive?(file)
 
     delete_log(path)

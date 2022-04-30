@@ -1,9 +1,9 @@
-defmodule Q3Reporter.LogWatcher.Supervisor do
+defmodule Q3Reporter.ModifyChecker.Supervisor do
   @moduledoc false
 
   use DynamicSupervisor
 
-  alias Q3Reporter.LogWatcher.Server
+  alias Q3Reporter.ModifyChecker.Server
 
   @spec start_link(keyword) :: Supervisor.on_start()
   def start_link(opts \\ []) do
