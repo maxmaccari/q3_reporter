@@ -1,4 +1,4 @@
-defmodule Q3Reporter.GaneServer.SupervisorTest do
+defmodule Q3Reporter.GameServer.SupervisorTest do
   use ExUnit.Case
 
   alias Q3Reporter.GameServer.Supervisor

@@ -41,7 +41,7 @@ defmodule Q3Reporter.GameServer.Server do
   def stop(path) do
     path
     |> via_tuple()
-    |> GenServer.stop()
+    |> GenServer.stop(:normal)
   end
 
   def init(opts) do

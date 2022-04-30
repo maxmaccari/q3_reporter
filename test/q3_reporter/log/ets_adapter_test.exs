@@ -1,5 +1,5 @@
 defmodule Q3Reporter.Log.ETSAdapterTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Q3Reporter.Log
   alias Q3Reporter.Log.ETSAdapter
@@ -9,10 +9,6 @@ defmodule Q3Reporter.Log.ETSAdapterTest do
   setup context do
     path = random_log_path()
     ETSAdapter.push(path, "", NaiveDateTime.new!(2022, 1, 1, 0, 0, 0))
-
-    on_exit(fn ->
-      ETSAdapter.close(path)
-    end)
 
     Map.put(context, :path, path)
   end
