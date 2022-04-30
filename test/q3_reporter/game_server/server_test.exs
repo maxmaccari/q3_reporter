@@ -16,68 +16,89 @@ defmodule Q3Reporter.GameServer.ServerTest do
     assert {:error, "path is required"} = Server.start_link()
   end
 
-  test "should call the initializer function with the given path when initialize" do
+  test "should call the watcher and loader functions with the given path when started" do
     path = random_log_path()
-    parent = self()
+    me = self()
 
-    initializer = fn path ->
-      send(parent, {:initializer_called, path})
+    watcher = fn path ->
+      send(me, {:watcher_called, path})
+
+      {:ok, nil}
+    end
+
+    loader = fn path ->
+      send(me, {:loader_called, path})
 
       {:ok, []}
     end
 
-    {:ok, _pid} = Server.start_link(path: path, initializer: initializer)
+    {:ok, _pid} = Server.start_link(path: path, watcher: watcher, loader: loader)
 
-    assert_receive {:initializer_called, ^path}
+    assert_receive {:watcher_called, ^path}
+    assert_receive {:loader_called, ^path}
   end
 
-  test "should stop if the initializer return error" do
-    initializer = fn _ -> {:error, :enoent} end
-    assert {:error, :enoent} = Server.start_link(path: "invalid", initializer: initializer)
+  test "should stop if the watcher or loader return error" do
+    fun = fn _ -> {:error, :enoent} end
+    assert {:error, :enoent} = Server.start_link(path: "invalid", watcher: fun)
+    assert {:error, :enoent} = Server.start_link(path: "invalid", loader: fun)
   end
 
-  test "should call loader function with the path if receive :file_updated message" do
+  test "should call loader function with the path if receive :updated message" do
     path = random_log_path()
-    parent = self()
+    me = self()
 
     loader = fn path ->
-      send(parent, {:loader_called, path})
+      send(me, {:loader_called, path})
 
       {:ok, []}
     end
 
     assert {:ok, pid} = Server.start_link(path: path, loader: loader)
 
-    refute_receive {:loader_called, ^path}
-
-    send(pid, {:file_updated, :ignored, :ignored})
+    send(pid, {:updated, :ignored, :ignored})
 
     assert_receive {:loader_called, ^path}
   end
 
   test "should stop the server if loader function return an error" do
-    Process.flag(:trap_exit, true)
-
     path = random_log_path()
+    {:ok, agent} = Agent.start(fn -> [[]] end)
 
-    loader = fn _path -> {:error, :enoent} end
+    loader = fn _path ->
+      Agent.get_and_update(agent, fn
+        [] -> {{:error, :enoent}, []}
+        [current | rest] -> {{:ok, current}, rest}
+      end)
+    end
 
+    Process.flag(:trap_exit, true)
     assert {:ok, pid} = Server.start_link(path: path, loader: loader)
 
-    send(pid, {:file_updated, :ignored, :ignored})
+    send(pid, {:updated, :ignored, :ignored})
 
     assert_receive {:EXIT, ^pid, {:shutdown, :enoent}}
 
     Process.flag(:trap_exit, false)
   end
 
-  test "should stop if receive the DOWN message from a monitored process" do
-    Process.flag(:trap_exit, true)
-
+  test "should monitor the watcher if it it process is alive, and stop if receive the DOWN message from it" do
     path = random_log_path()
-    assert {:ok, pid} = Server.start_link(path: path)
+    me = self()
+    {:ok, agent} = Agent.start(fn -> :ok end)
 
-    send(pid, {:DOWN, make_ref(), :process, self(), {:shutdown, {:error, :enoent}}})
+    watcher = fn _path ->
+      send(me, {:initialized_watcher, agent})
+
+      {:ok, agent}
+    end
+
+    Process.flag(:trap_exit, true)
+    {:ok, pid} = Server.start_link(path: path, watcher: watcher)
+
+    assert_receive {:initialized_watcher, ^agent}
+
+    Agent.stop(agent, {:shutdown, {:error, :enoent}})
 
     assert_receive {:EXIT, ^pid, {:shutdown, {:error, :enoent}}}
 
@@ -92,7 +113,7 @@ defmodule Q3Reporter.GameServer.ServerTest do
     Server.subscribe(path, :by_game)
     Server.subscribe(path, :ranking)
 
-    send(pid, {:file_updated, :ignored, :ignored})
+    send(pid, {:updated, :ignored, :ignored})
 
     assert_receive {:game_results, ^path, :by_game,
                     %Q3Reporter.Core.Results{entries: [], mode: :by_game}}
@@ -111,7 +132,7 @@ defmodule Q3Reporter.GameServer.ServerTest do
 
     Server.unsubscribe(path, :ranking)
 
-    send(pid, {:file_updated, :ignored, :ignored})
+    send(pid, {:updated, :ignored, :ignored})
 
     assert_receive {:game_results, ^path, :by_game,
                     %Q3Reporter.Core.Results{entries: [], mode: :by_game}}

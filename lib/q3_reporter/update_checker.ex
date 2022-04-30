@@ -6,7 +6,7 @@ defmodule Q3Reporter.UpdateChecker do
 
       {Q3Reporter.UpdateChecker, []}
 
-  You can now use the functions in this module to open and subscribe for file changes:
+  You can now use the functions in this module to open and subscribe for updates:
 
       iex> Q3Reporter.UpdateChecker
       iex> {:ok, file} = UpdateChecker.open("example", &Q3Reporter.Log.mtime/1)

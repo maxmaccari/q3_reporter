@@ -1,7 +1,35 @@
 defmodule Q3Reporter.GameServer do
   use Supervisor
 
-  @moduledoc false
+  @moduledoc """
+  It is a service to store and receive game updates automatically.
+
+  You start Q3Reporter.GameServer directly in your supervision tree:
+
+      {Q3Reporter.GameServer, []}
+
+  You can now use the functions in this module to open and subscribe for game updates:
+
+      iex> path = "path_to_log"
+      iex> Q3Reporter.GameServer
+      iex> {:ok, pid} = GameServer.start(
+        path,
+        watcher: Q3Reporter.start_watch_log_updates/1,
+        loader: Q3Reporter.parse/1
+      )
+      {:ok, #PID<0, 100, 0>}
+      iex> GameServer.subscribe(path, :by_game)
+      :ok
+      iex> flush()
+      {:game_results, "path_to_log", :by_game,
+                    %Q3Reporter.Core.Results{entries: [], mode: :by_game}}
+      :ok
+      iex> UpdateChecker.unsubscribe(path)
+      iex> flush()
+      :ok
+      iex> UpdateChecker.stop(path)
+      :ok
+  """
 
   alias Q3Reporter.GameServer.Server
   alias Q3Reporter.GameServer.Supervisor, as: GameSupervisor

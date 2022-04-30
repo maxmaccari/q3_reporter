@@ -104,36 +104,25 @@ defmodule Q3Reporter.GameServer.StateTest do
     assert %Results{mode: :ranking} = State.results(state, :ranking)
   end
 
-  test "should allow to initialize games by the given initialize function" do
-    initializer = fn path ->
-      send(self(), {:initialized_with, path})
+  test "should allow to start watching updates by the given watcher function" do
+    watcher = fn path ->
+      send(self(), {:watching, path})
 
-      {:ok, [%Game{}]}
+      {:ok, spawn(fn -> :ok end)}
     end
 
-    bad_initializer = fn _ ->
+    bad_watcher = fn _ ->
       {:error, :enoent}
     end
 
-    assert {:ok,
-            %State{
-              by_game: %Results{},
-              ranking: %Results{},
-              games: []
-            }} = State.new() |> State.initialize()
+    assert {:ok, _pid} = State.new() |> State.start_watcher()
 
-    assert {:ok,
-            %State{
-              by_game: %Results{},
-              ranking: %Results{},
-              games: [%Game{}]
-            }} =
-             State.new(path: "expected_path", initializer: initializer)
-             |> State.initialize()
+    assert {:ok, _pid} =
+             State.new(path: "expected_path", watcher: watcher) |> State.start_watcher()
 
-    assert_received {:initialized_with, "expected_path"}
+    assert_received {:watching, "expected_path"}
 
-    assert {:error, :enoent} = State.new(initializer: bad_initializer) |> State.initialize()
+    assert {:error, :enoent} = State.new(watcher: bad_watcher) |> State.start_watcher()
   end
 
   test "should allow to load games by the given loader function" do

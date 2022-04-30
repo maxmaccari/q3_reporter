@@ -10,12 +10,14 @@ defmodule Q3Reporter.GameServer.State do
             by_game: nil,
             ranking: nil,
             subscribers: [],
-            initializer: &__MODULE__.__default_initializer__/1,
+            watcher_pid: nil,
+            watcher: &__MODULE__.__default_watcher__/1,
             loader: &__MODULE__.__default_loader__/1
 
   @type mode :: :by_game | :ranking
 
-  @type initializer :: (String.t() -> {:ok, list(Game.t())} | {:error, any()})
+  @type watcher :: (String.t() -> {:ok, pid} | {:error, any()})
+  @type loader :: (String.t() -> {:ok, list(Game.t())} | {:error, any()})
 
   @type t :: %__MODULE__{
           path: String.t(),
@@ -24,7 +26,9 @@ defmodule Q3Reporter.GameServer.State do
           by_game: Results.t(),
           ranking: Results.t(),
           subscribers: list({pid, mode}),
-          initializer: initializer()
+          watcher_pid: pid | nil,
+          watcher: watcher(),
+          loader: loader()
         }
 
   @spec new(keyword) :: t
@@ -38,6 +42,11 @@ defmodule Q3Reporter.GameServer.State do
     |> put_games(games)
     |> generate_by_games()
     |> generate_ranking()
+  end
+
+  @spec update_watcher_pid(t(), pid) :: t()
+  def update_watcher_pid(%__MODULE__{} = state, pid) do
+    %{state | watcher_pid: pid}
   end
 
   defp put_games(state, games), do: %{state | games: games}
@@ -73,9 +82,9 @@ defmodule Q3Reporter.GameServer.State do
   def results(%__MODULE__{by_game: by_game}, :by_game), do: by_game
   def results(%__MODULE__{ranking: ranking}, :ranking), do: ranking
 
-  def initialize(%__MODULE__{initializer: initializer, path: path} = state) do
-    case initializer.(path) do
-      {:ok, games} -> {:ok, update_games(state, games)}
+  def start_watcher(%__MODULE__{watcher: watcher, path: path} = state) do
+    case watcher.(path) do
+      {:ok, pid} -> {:ok, update_watcher_pid(state, pid)}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -87,8 +96,8 @@ defmodule Q3Reporter.GameServer.State do
     end
   end
 
-  @spec __default_initializer__(String.t()) :: {:ok, []}
-  def __default_initializer__(_path), do: {:ok, []}
+  @spec __default_watcher__(String.t()) :: {:ok, pid}
+  def __default_watcher__(_path), do: {:ok, spawn(fn -> :ok end)}
 
   @spec __default_loader__(String.t()) :: {:ok, []}
   def __default_loader__(_path), do: {:ok, []}

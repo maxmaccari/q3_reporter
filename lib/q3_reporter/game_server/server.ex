@@ -81,12 +81,16 @@ defmodule Q3Reporter.GameServer.Server do
   end
 
   @impl true
-  def handle_info({:file_updated, _, _}, state) do
+  def handle_info({:updated, _, _}, state) do
     {:noreply, state, {:continue, :reload_games}}
   end
 
   def handle_info({:DOWN, _ref, :process, _watcher, {:shutdown, reason}}, state) do
     {:stop, {:shutdown, reason}, state}
+  end
+
+  def handle_info(_ignored, state) do
+    {:noreply, state}
   end
 
   @impl true
@@ -125,8 +129,19 @@ defmodule Q3Reporter.GameServer.Server do
   end
 
   defp initialize(opts) do
-    opts
-    |> State.new()
-    |> State.initialize()
+    with state <- State.new(opts),
+         {:ok, state} <- State.start_watcher(state),
+         :ok <- monitor_watcher(state),
+         {:ok, state} <- State.load_games(state) do
+      {:ok, state}
+    end
   end
+
+  defp monitor_watcher(%{watcher_pid: pid}) when is_pid(pid) do
+    Process.monitor(pid)
+
+    :ok
+  end
+
+  defp monitor_watcher(_), do: :ok
 end

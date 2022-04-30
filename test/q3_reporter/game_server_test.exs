@@ -8,15 +8,7 @@ defmodule Q3Reporter.GameServerTest do
 
   @content __DIR__ |> Path.join("../fixtures/example.log") |> File.read!()
 
-  defp initializer(path) do
-    case Log.read(path) do
-      {:ok, content} ->
-        {:ok, Core.log_to_games(content)}
-
-      error ->
-        error
-    end
-  end
+  defp watcher(_path), do: {:ok, nil}
 
   defp loader(path) do
     case Log.read(path) do
@@ -32,7 +24,7 @@ defmodule Q3Reporter.GameServerTest do
     path = create_log()
     push_log(path, @content, NaiveDateTime.new!(2022, 1, 1, 0, 0, 0))
 
-    assert {:ok, pid} = GameServer.start(path, initializer: &initializer/1, loader: &loader/1)
+    assert {:ok, pid} = GameServer.start(path, watcher: &watcher/1, loader: &loader/1)
 
     assert Process.alive?(pid)
 
@@ -50,7 +42,7 @@ defmodule Q3Reporter.GameServerTest do
     assert :ok = GameServer.subscribe(path)
     assert GameServer.subscribed?(path)
 
-    send(pid, {:file_updated, :ignored, :ignored})
+    send(pid, {:updated, :ignored, :ignored})
 
     assert_receive {:game_results, ^path, :by_game, %Results{entries: [%{}], mode: :by_game}}
 
