@@ -1,8 +1,23 @@
 defmodule Q3ReporterCli.CliTest do
-  use ExUnit.Case
-  import ExUnit.CaptureIO
+  use ExUnit.Case, async: true
 
   alias Q3ReporterCli.Cli
+
+  import ExUnit.CaptureIO
+  import Support.LogHelpers
+
+  @content Path.join(__DIR__, "../fixtures/example.log") |> File.read!()
+
+  setup_all context do
+    path = create_log("test/fixtures/example.log")
+    push_log(path, @content)
+
+    on_exit(fn ->
+      delete_log(path)
+    end)
+
+    Map.put(context, :path, path)
+  end
 
   test "show help when send invalid params" do
     assert capture_io(:stderr, fn ->

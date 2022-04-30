@@ -1,19 +1,20 @@
-defmodule Q3Reporter.FileWatcher.State do
+defmodule Q3Reporter.UpdateChecker.State do
   @moduledoc false
 
-  @typep date :: {integer, integer, integer}
-  @typep time :: {integer, integer, integer}
-  @typep erl_datetime :: {date, time}
+  @type mtime :: NaiveDateTime.t()
+  @type checker ::
+          (String.t() -> {:ok, mtime()} | {:error, any()})
 
   @type t :: %__MODULE__{
-          mtime: erl_datetime(),
+          mtime: mtime,
           path: String.t(),
-          subscribers: list(pid())
+          subscribers: list(pid()),
+          checker: checker
         }
 
-  defstruct path: nil, mtime: nil, subscribers: []
+  defstruct path: nil, mtime: nil, subscribers: [], checker: &__MODULE__.__default_checker__/1
 
-  @spec new(path: String.t(), mtime: erl_datetime()) :: t()
+  @spec new(keyword()) :: t()
   def new(opts) do
     struct!(__MODULE__, opts)
   end
@@ -51,8 +52,22 @@ defmodule Q3Reporter.FileWatcher.State do
     state
   end
 
-  @spec update_mtime(t(), erl_datetime()) :: t()
+  @spec update_mtime(t(), mtime()) :: t()
   def update_mtime(%__MODULE__{} = state, mtime) do
     %{state | mtime: mtime}
   end
+
+  @spec check(t()) :: :not_modified | {:modified, t()} | {:error, any()}
+  def check(%__MODULE__{} = state) do
+    %{path: path, mtime: mtime, checker: checker} = state
+
+    case checker.(path) do
+      {:ok, ^mtime} -> :not_modified
+      {:ok, new_mtime} -> {:modified, update_mtime(state, new_mtime)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec __default_checker__(String.t()) :: {:ok, mtime()}
+  def __default_checker__(_path), do: {:ok, NaiveDateTime.utc_now()}
 end

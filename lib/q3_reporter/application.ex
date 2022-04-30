@@ -5,9 +5,10 @@ defmodule Q3Reporter.Application do
 
   def start(_type, _args) do
     children = [
-      {Q3Reporter.FileWatcher, []}
+      Q3Reporter.UpdateChecker,
+      Q3Reporter.GameServer
     ]
 
-    Supervisor.start_link(children, strategy: :one_for_one)
+    Supervisor.start_link(children, strategy: :rest_for_one)
   end
 end

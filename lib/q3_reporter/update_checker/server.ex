@@ -1,19 +1,22 @@
-defmodule Q3Reporter.FileWatcher.Server do
+defmodule Q3Reporter.UpdateChecker.Server do
   @moduledoc false
 
-  @timeout Application.compile_env(:q3_reporter, [Q3Reporter.FileWatcher, :timeout], 1_000)
+  @timeout Application.compile_env(:q3_reporter, [Q3Reporter.UpdateChecker, :timeout], 1_000)
 
   use GenServer
 
-  alias Q3Reporter.FileWatcher.State
+  alias Q3Reporter.UpdateChecker.State
 
   @type state :: State.t()
 
   # Client
 
-  @spec start_link(String.t(), keyword()) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(path, opts \\ []) do
-    GenServer.start_link(__MODULE__, path, opts)
+  @spec start_link(keyword()) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(opts \\ []) do
+    case Keyword.fetch(opts, :path) do
+      {:ok, _path} -> GenServer.start_link(__MODULE__, opts, opts)
+      _ -> {:error, "path is required"}
+    end
   end
 
   @spec subscribe(pid) :: :ok
@@ -31,24 +34,23 @@ defmodule Q3Reporter.FileWatcher.Server do
     GenServer.call(file, :unsubscribe)
   end
 
-  @spec close(pid) :: :ok
-  def close(pid) do
+  @spec stop(pid) :: :ok
+  def stop(pid) do
     GenServer.stop(pid)
   end
 
   # Server Callbacks
 
   @impl true
-  @spec init(String.t()) :: {:ok, state} | {:stop, atom()}
-  def init(path) do
-    case File.stat(path) do
-      {:ok, %{mtime: mtime}} ->
-        :timer.send_interval(@timeout, :tick)
+  def init(opts) do
+    :timer.send_interval(@timeout, :tick)
 
-        {:ok, State.new(path: path, mtime: mtime)}
+    state = State.new(opts)
 
-      {:error, reason} ->
-        {:stop, reason}
+    case State.check(state) do
+      :not_modified -> {:ok, state}
+      {:modified, new_state} -> {:ok, new_state}
+      {:error, reason} -> {:stop, reason}
     end
   end
 
@@ -69,23 +71,24 @@ defmodule Q3Reporter.FileWatcher.Server do
 
   @impl true
   def handle_info(:tick, state) do
-    %{mtime: mtime, path: path} = state
-
     state = unsubscribe_dead_processes(state)
 
-    case File.stat!(path) do
-      %{mtime: ^mtime} ->
+    case State.check(state) do
+      {:modified, state} ->
+        notify_subscribers(state)
+
         {:noreply, state}
 
-      %{mtime: new_mtime} ->
-        notify_subscribers(state, new_mtime)
+      :not_modified ->
+        {:noreply, state}
 
-        {:noreply, State.update_mtime(state, new_mtime)}
+      {:error, _reason} = error ->
+        {:stop, {:shutdown, error}, state}
     end
   end
 
-  defp notify_subscribers(state, mtime) do
-    State.each_subscribers(state, &send(&1, {:file_updated, self(), mtime}))
+  defp notify_subscribers(%{mtime: mtime} = state) do
+    State.each_subscribers(state, &send(&1, {:updated, self(), mtime}))
   end
 
   defp unsubscribe_dead_processes(state) do
