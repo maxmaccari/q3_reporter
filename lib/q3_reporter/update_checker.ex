@@ -1,32 +1,32 @@
-defmodule Q3Reporter.ModifyChecker do
+defmodule Q3Reporter.UpdateChecker do
   @moduledoc """
   It is a service to help to check updates automatically.
 
-  You start Q3Reporter.ModifyChecker directly in your supervision tree:
+  You start Q3Reporter.UpdateChecker directly in your supervision tree:
 
-      {Q3Reporter.ModifyChecker, []}
+      {Q3Reporter.UpdateChecker, []}
 
   You can now use the functions in this module to open and subscribe for file changes:
 
-      iex> Q3Reporter.ModifyChecker
-      iex> {:ok, file} = ModifyChecker.open("example", &Q3Reporter.Log.mtime/1)
+      iex> Q3Reporter.UpdateChecker
+      iex> {:ok, file} = UpdateChecker.open("example", &Q3Reporter.Log.mtime/1)
       {:ok, #PID<0, 100, 0>}
-      iex> ModifyChecker.subscribe(file)
+      iex> UpdateChecker.subscribe(file)
       :ok
       iex> flush()
       {:updated, #PID<0.302.0>, {{2022, 4, 22}, {0, 40, 11}}}
       :ok
-      iex> ModifyChecker.unsubscribe(file)
+      iex> UpdateChecker.unsubscribe(file)
       iex> flush()
       :ok
-      iex> ModifyChecker.stop(file)
+      iex> UpdateChecker.stop(file)
       :ok
 
   """
 
-  alias Q3Reporter.ModifyChecker.{Server, Supervisor}
+  alias Q3Reporter.UpdateChecker.{Server, Supervisor}
 
-  @type checker :: ModifyChecker.State.checker()
+  @type checker :: UpdateChecker.State.checker()
 
   @doc """
   Open a file to be monitored for the given `path`.
@@ -69,10 +69,10 @@ defmodule Q3Reporter.ModifyChecker do
   """
   defdelegate stop(pid), to: Server
 
+  # coveralls-ignore-start
   @doc false
   defdelegate start_link(opts \\ []), to: Supervisor
 
-  # coveralls-ignore-start
   @doc false
   defdelegate child_spec(params), to: Supervisor
   # coveralls-ignore-end

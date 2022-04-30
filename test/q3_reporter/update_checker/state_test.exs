@@ -1,7 +1,7 @@
-defmodule Q3Reporter.ModifyChecker.StateTest do
+defmodule Q3Reporter.UpdateChecker.StateTest do
   use ExUnit.Case, async: true
 
-  alias Q3Reporter.ModifyChecker.State
+  alias Q3Reporter.UpdateChecker.State
 
   defp create_state(opts \\ []) do
     opts =

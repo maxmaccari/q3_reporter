@@ -1,7 +1,7 @@
-defmodule Q3Reporter.ModifyChecker.SupervisorTest do
+defmodule Q3Reporter.UpdateChecker.SupervisorTest do
   use ExUnit.Case
 
-  alias Q3Reporter.ModifyChecker
+  alias Q3Reporter.UpdateChecker
 
   import Support.LogHelpers
 
@@ -16,7 +16,7 @@ defmodule Q3Reporter.ModifyChecker.SupervisorTest do
   end
 
   test "should start Server for the given file path", %{path: path} do
-    assert {:ok, file} = ModifyChecker.Supervisor.start_child(path: path)
+    assert {:ok, file} = UpdateChecker.Supervisor.start_child(path: path)
     assert Process.alive?(file)
   end
 end

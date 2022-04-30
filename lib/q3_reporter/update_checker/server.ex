@@ -1,11 +1,11 @@
-defmodule Q3Reporter.ModifyChecker.Server do
+defmodule Q3Reporter.UpdateChecker.Server do
   @moduledoc false
 
-  @timeout Application.compile_env(:q3_reporter, [Q3Reporter.ModifyChecker, :timeout], 1_000)
+  @timeout Application.compile_env(:q3_reporter, [Q3Reporter.UpdateChecker, :timeout], 1_000)
 
   use GenServer
 
-  alias Q3Reporter.ModifyChecker.State
+  alias Q3Reporter.UpdateChecker.State
 
   @type state :: State.t()
 

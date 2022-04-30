@@ -1,4 +1,4 @@
-defmodule Q3Reporter.ModifyChecker.State do
+defmodule Q3Reporter.UpdateChecker.State do
   @moduledoc false
 
   @type mtime :: NaiveDateTime.t()
