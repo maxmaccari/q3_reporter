@@ -3,30 +3,12 @@ defmodule Q3Reporter.GameServer.ServerTest do
 
   alias Q3Reporter.Core.Results
   alias Q3Reporter.GameServer.Server
-  alias Q3Reporter.GameServer
 
   import Support.LogHelpers
 
-  @content __DIR__ |> Path.join("../../fixtures/example.log") |> File.read!()
-
-  defp with_log(context) do
-    path = create_log()
-
-    push_log(path, @content, NaiveDateTime.new!(2022, 1, 1, 0, 0, 0))
-
-    Map.put(context, :path, path)
-  end
-
-  defp with_server(%{path: path} = context) do
-    {:ok, _pid} = GameServer.start(path)
-
-    context
-  end
-
-  setup :with_log
-
-  test "should start a server with the correct path", %{path: path} do
-    assert {:ok, pid} = GameServer.start(path)
+  test "should start a server with the correct path" do
+    path = random_log_path()
+    assert {:ok, pid} = start_supervised({Server, path: path})
     assert Process.alive?(pid)
   end
 
@@ -34,101 +16,159 @@ defmodule Q3Reporter.GameServer.ServerTest do
     assert {:error, "path is required"} = Server.start_link()
   end
 
-  @invalid_path "invalid"
-  test "should stop if the given path is invalid" do
-    assert {:error, :enoent} = Server.start_link(path: @invalid_path)
+  test "should call the initializer function with the given path when initialize" do
+    path = random_log_path()
+    parent = self()
+
+    initializer = fn path ->
+      send(parent, {:initializer_called, path})
+
+      {:ok, []}
+    end
+
+    {:ok, _pid} = Server.start_link(path: path, initializer: initializer)
+
+    assert_receive {:initializer_called, ^path}
   end
 
-  test "should stop if the given log is deleted" do
-    Process.flag(:trap_exit, true)
-    path = create_log()
+  test "should stop if the initializer return error" do
+    initializer = fn _ -> {:error, :enoent} end
+    assert {:error, :enoent} = Server.start_link(path: "invalid", initializer: initializer)
+  end
 
+  test "should call loader function with the path if receive :file_updated message" do
+    path = random_log_path()
+    parent = self()
+
+    loader = fn path ->
+      send(parent, {:loader_called, path})
+
+      {:ok, []}
+    end
+
+    assert {:ok, pid} = Server.start_link(path: path, loader: loader)
+
+    refute_receive {:loader_called, ^path}
+
+    send(pid, {:file_updated, :ignored, :ignored})
+
+    assert_receive {:loader_called, ^path}
+  end
+
+  test "should stop the server if loader function return an error" do
+    Process.flag(:trap_exit, true)
+
+    path = random_log_path()
+
+    loader = fn _path -> {:error, :enoent} end
+
+    assert {:ok, pid} = Server.start_link(path: path, loader: loader)
+
+    send(pid, {:file_updated, :ignored, :ignored})
+
+    assert_receive {:EXIT, ^pid, {:shutdown, :enoent}}
+
+    Process.flag(:trap_exit, false)
+  end
+
+  test "should stop if receive the DOWN message from a monitored process" do
+    Process.flag(:trap_exit, true)
+
+    path = random_log_path()
     assert {:ok, pid} = Server.start_link(path: path)
 
-    assert :ok = Server.subscribe(path, :by_game)
-
-    touch_log(path)
-
-    assert_receive {:game_results, ^path, :by_game, %Results{entries: [], mode: :by_game}}
-
-    delete_log(path)
+    send(pid, {:DOWN, make_ref(), :process, self(), {:shutdown, {:error, :enoent}}})
 
     assert_receive {:EXIT, ^pid, {:shutdown, {:error, :enoent}}}
 
     Process.flag(:trap_exit, false)
   end
 
-  describe "with server started" do
-    setup [:with_log, :with_server]
+  test "should notify subscribed pids with new games after game update" do
+    path = random_log_path()
 
-    test "should allow to subscribe to a log with :by_game mode", %{path: path} do
-      assert :ok = Server.subscribe(path)
-      assert Server.subscribed?(path)
-      refute Server.subscribed?(path, :ranking)
+    assert {:ok, pid} = Server.start_link(path: path)
 
-      touch_log(path)
+    Server.subscribe(path, :by_game)
+    Server.subscribe(path, :ranking)
 
-      assert_receive {:game_results, ^path, :by_game, %Results{entries: [], mode: :by_game}}
-    end
+    send(pid, {:file_updated, :ignored, :ignored})
 
-    test "should allow to subscribe to a log with :ranking mode", %{path: path} do
-      assert :ok = Server.subscribe(path, :ranking)
-      assert Server.subscribed?(path, :ranking)
-      refute Server.subscribed?(path, :by_game)
+    assert_receive {:game_results, ^path, :by_game,
+                    %Q3Reporter.Core.Results{entries: [], mode: :by_game}}
 
-      touch_log(path)
+    assert_receive {:game_results, ^path, :ranking,
+                    %Q3Reporter.Core.Results{entries: [], mode: :ranking}}
+  end
 
-      assert_receive {:game_results, ^path, :ranking, %Results{entries: [], mode: :ranking}}
-    end
+  test "should allow to unsubscribed pids with new games after game update" do
+    path = random_log_path()
 
-    test "should allow to suscribe :by_game and :by_ranking modes", %{path: path} do
-      assert :ok = Server.subscribe(path, :by_game)
-      assert :ok = Server.subscribe(path, :ranking)
+    assert {:ok, pid} = Server.start_link(path: path)
 
-      assert Server.subscribed?(path, :ranking)
-      assert Server.subscribed?(path, :by_game)
+    Server.subscribe(path, :by_game)
+    Server.subscribe(path, :ranking)
 
-      touch_log(path)
+    Server.unsubscribe(path, :ranking)
 
-      assert_receive {:game_results, ^path, :by_game, %Results{entries: [], mode: :by_game}}
-      assert_receive {:game_results, ^path, :ranking, %Results{entries: [], mode: :ranking}}
-    end
+    send(pid, {:file_updated, :ignored, :ignored})
 
-    test "should allow to unsubscribe by the given mode", %{path: path} do
-      assert :ok = Server.subscribe(path, :by_game)
-      assert :ok = Server.subscribe(path, :ranking)
+    assert_receive {:game_results, ^path, :by_game,
+                    %Q3Reporter.Core.Results{entries: [], mode: :by_game}}
 
-      assert Server.unsubscribe(path, :by_game)
+    refute_receive {:game_results, ^path, :ranking,
+                    %Q3Reporter.Core.Results{entries: [], mode: :ranking}}
+  end
 
-      touch_log(path)
+  test "should allow to check if the pid is subscribed" do
+    path = random_log_path()
 
-      refute_receive {:game_results, ^path, :by_game, %Results{entries: [], mode: :by_game}}
-      assert_receive {:game_results, ^path, :ranking, %Results{entries: [], mode: :ranking}}
+    assert {:ok, _pid} = Server.start_link(path: path)
 
-      assert Server.unsubscribe(path, :ranking)
+    Server.subscribe(path, :by_game)
+    Server.subscribe(path, :ranking)
 
-      touch_log(path)
+    assert Server.subscribed?(path, :by_game)
+    assert Server.subscribed?(path, :ranking)
 
-      refute_receive {:game_results, ^path, :by_game, %Results{entries: [], mode: :by_game}}
-      refute_receive {:game_results, ^path, :ranking, %Results{entries: [], mode: :ranking}}
-    end
+    Server.unsubscribe(path, :by_game)
+    Server.unsubscribe(path, :ranking)
 
-    test "should get current results from path when requisited", %{path: path} do
-      assert %Q3Reporter.Core.Results{
-               entries: [
-                 %{
-                   game: "Game 1",
-                   ranking: [%{}],
-                   total_kills: 0
-                 }
-               ],
-               mode: :by_game
-             } = Server.results(path)
+    refute Server.subscribed?(path, :by_game)
+    refute Server.subscribed?(path, :ranking)
+  end
 
-      assert %Q3Reporter.Core.Results{
-               entries: [%{}],
-               mode: :ranking
-             } = Server.results(path, :ranking)
-    end
+  test "should allow to get the results from path" do
+    path = random_log_path()
+
+    assert {:ok, _pid} = Server.start_link(path: path)
+
+    assert %Results{
+             entries: [],
+             mode: :by_game
+           } = Server.results(path)
+
+    assert %Results{
+             entries: [],
+             mode: :ranking
+           } = Server.results(path, :ranking)
+  end
+
+  test "should allow to stop the server" do
+    path = random_log_path()
+
+    assert {:ok, pid} = Server.start_link(path: path)
+    assert :ok = Server.stop(path)
+
+    refute Process.alive?(pid)
+  end
+
+  test "should ignore unknown messages without stop the server" do
+    path = random_log_path()
+
+    assert {:ok, pid} = Server.start_link(path: path)
+    send(pid, {:some_unknown_message, :hello})
+
+    assert Process.alive?(pid)
   end
 end

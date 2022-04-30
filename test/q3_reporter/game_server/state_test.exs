@@ -12,124 +12,159 @@ defmodule Q3Reporter.GameServer.StateTest do
     :c.pid(0, :rand.uniform(99), :rand.uniform(5000))
   end
 
-  describe "GameServer.State" do
-    test "new/1 create a new state" do
-      path = "example.log"
+  test "should create a new state" do
+    path = "example.log"
 
-      assert %State{
-               path: ^path,
-               games: [],
-               subscribers: []
-             } = State.new(path: path)
+    assert %State{
+             path: ^path,
+             games: [],
+             subscribers: []
+           } = State.new(path: path)
+  end
+
+  test "should allow update the list of games, ranking and by_game results to the state" do
+    state = create_state()
+    games = [Game.new()]
+
+    assert %{
+             games: ^games,
+             by_game: %Results{mode: :by_game},
+             ranking: %Results{mode: :ranking}
+           } = State.update_games(state, games)
+  end
+
+  test "should allow subscribe a pid by the given mode only one time per mode" do
+    state = create_state()
+    pid = create_pid()
+    anoter_pid = create_pid()
+
+    assert %{subscribers: [{^pid, :by_game}]} = State.subscribe(state, pid)
+    assert %{subscribers: [{^pid, :by_game}]} = State.subscribe(state, pid, :by_game)
+    assert %{subscribers: [{^pid, :ranking}]} = State.subscribe(state, pid, :ranking)
+
+    assert %{subscribers: [{^anoter_pid, :by_game}, {^pid, :by_game}]} =
+             state
+             |> State.subscribe(pid)
+             |> State.subscribe(anoter_pid)
+
+    assert %{subscribers: [{^pid, :ranking}, {^pid, :by_game}]} =
+             state
+             |> State.subscribe(pid, :by_game)
+             |> State.subscribe(pid, :ranking)
+
+    assert %{subscribers: [{^anoter_pid, :ranking}, {^pid, :ranking}, {^pid, :by_game}]} =
+             state
+             |> State.subscribe(pid, :by_game)
+             |> State.subscribe(pid, :ranking)
+             |> State.subscribe(anoter_pid, :ranking)
+
+    assert %{subscribers: [{^pid, :ranking}, {^pid, :by_game}]} =
+             state
+             |> State.subscribe(pid)
+             |> State.subscribe(pid, :by_game)
+             |> State.subscribe(pid, :ranking)
+             |> State.subscribe(pid, :ranking)
+  end
+
+  test "should unsubscribe a pid by the given mode" do
+    state = create_state()
+    pid = create_pid()
+
+    assert %{subscribers: []} = state |> State.subscribe(pid) |> State.unsubscribe(pid)
+
+    assert %{subscribers: [{^pid, :ranking}]} =
+             state
+             |> State.subscribe(pid)
+             |> State.subscribe(pid, :ranking)
+             |> State.unsubscribe(pid)
+
+    assert %{subscribers: [{^pid, :by_game}]} =
+             state
+             |> State.subscribe(pid)
+             |> State.subscribe(pid, :ranking)
+             |> State.unsubscribe(pid, :ranking)
+  end
+
+  test "should allow to check if pid is subscribed by the given mode" do
+    state = create_state()
+    pid = create_pid()
+    another_pid = create_pid()
+
+    assert state |> State.subscribe(pid) |> State.subscribed?(pid, :by_game)
+    assert state |> State.subscribe(pid, :ranking) |> State.subscribed?(pid, :ranking)
+
+    refute state |> State.subscribe(another_pid) |> State.subscribed?(pid, :by_game)
+    refute state |> State.subscribe(pid) |> State.subscribed?(pid, :ranking)
+  end
+
+  test "should allow to return the result by the given mode" do
+    state = State.update_games(create_state(), [Game.new()])
+
+    assert %Results{mode: :by_game} = State.results(state, :by_game)
+    assert %Results{mode: :ranking} = State.results(state, :ranking)
+  end
+
+  test "should allow to initialize games by the given initialize function" do
+    initializer = fn path ->
+      send(self(), {:initialized_with, path})
+
+      {:ok, [%Game{}]}
     end
 
-    test "set_watch_pid/2 set a watch_pid to the state" do
-      state = create_state()
-      watch_pid = create_pid()
-
-      assert %{watch_pid: ^watch_pid} = State.set_watch_pid(state, watch_pid)
+    bad_initializer = fn _ ->
+      {:error, :enoent}
     end
 
-    test "set_games/2 set a list of games, ranking and by_game results to the state" do
-      state = create_state()
-      games = [Game.new()]
+    assert {:ok,
+            %State{
+              by_game: %Results{},
+              ranking: %Results{},
+              games: []
+            }} = State.new() |> State.initialize()
 
-      assert %{
-               games: ^games,
-               by_game: %Results{mode: :by_game},
-               ranking: %Results{mode: :ranking}
-             } = State.set_games(state, games)
+    assert {:ok,
+            %State{
+              by_game: %Results{},
+              ranking: %Results{},
+              games: [%Game{}]
+            }} =
+             State.new(path: "expected_path", initializer: initializer)
+             |> State.initialize()
+
+    assert_received {:initialized_with, "expected_path"}
+
+    assert {:error, :enoent} = State.new(initializer: bad_initializer) |> State.initialize()
+  end
+
+  test "should allow to load games by the given loader function" do
+    loader = fn path ->
+      send(self(), {:loaded_with, path})
+
+      {:ok, [%Game{}]}
     end
 
-    test "subscribe/2 subscribe a pid by :by_game mode" do
-      state = create_state()
-      pid = create_pid()
-      anoter_pid = create_pid()
-
-      assert state =
-               %{
-                 subscribers: [{^pid, :by_game}]
-               } = State.subscribe(state, pid)
-
-      assert state =
-               %{
-                 subscribers: [{^pid, :by_game}]
-               } = State.subscribe(state, pid)
-
-      assert %{
-               subscribers: [{^anoter_pid, :by_game}, {^pid, :by_game}]
-             } = State.subscribe(state, anoter_pid)
+    bad_loader = fn _ ->
+      {:error, :enoent}
     end
 
-    test "subscribe/3 subscribe a pid by the given mode" do
-      state = create_state()
-      pid = create_pid()
-      anoter_pid = create_pid()
+    assert {:ok,
+            %State{
+              by_game: %Results{},
+              ranking: %Results{},
+              games: []
+            }} = State.new() |> State.load_games()
 
-      assert state =
-               %{
-                 subscribers: [{^pid, :by_game}]
-               } = State.subscribe(state, pid, :by_game)
+    assert {:ok,
+            %State{
+              by_game: %Results{},
+              ranking: %Results{},
+              games: [%Game{}]
+            }} =
+             State.new(path: "expected_path", loader: loader)
+             |> State.load_games()
 
-      assert state =
-               %{
-                 subscribers: [{^pid, :ranking}, {^pid, :by_game}]
-               } = State.subscribe(state, pid, :ranking)
+    assert_received {:loaded_with, "expected_path"}
 
-      assert state =
-               %{
-                 subscribers: [{^pid, :ranking}, {^pid, :by_game}]
-               } = State.subscribe(state, pid, :ranking)
-
-      assert %{
-               subscribers: [{^anoter_pid, :ranking}, {^pid, :ranking}, {^pid, :by_game}]
-             } = State.subscribe(state, anoter_pid, :ranking)
-    end
-
-    test "unsubscribe/2 unsubscribe a pid by :by_game mode" do
-      state = create_state()
-      pid = create_pid()
-
-      state = State.subscribe(state, pid)
-      state = State.subscribe(state, pid, :ranking)
-
-      assert %{
-               subscribers: [{^pid, :ranking}]
-             } = State.unsubscribe(state, pid)
-    end
-
-    test "unsubscribe/3 unsubscribe a pid by the given mode" do
-      state = create_state()
-      pid = create_pid()
-
-      state = State.subscribe(state, pid)
-      state = State.subscribe(state, pid, :ranking)
-
-      assert %{
-               subscribers: [{^pid, :by_game}]
-             } = State.unsubscribe(state, pid, :ranking)
-    end
-
-    test "subscribed?/3 return if pid is subscribed by the given mode" do
-      state = create_state()
-      pid = create_pid()
-      another_pid = create_pid()
-
-      state = State.subscribe(state, pid)
-      state = State.subscribe(state, another_pid, :ranking)
-
-      assert State.subscribed?(state, pid, :by_game)
-      refute State.subscribed?(state, pid, :ranking)
-
-      assert State.subscribed?(state, another_pid, :ranking)
-      refute State.subscribed?(state, another_pid, :by_game)
-    end
-
-    test "results/2 return the result by the given mode" do
-      state = State.set_games(create_state(), [Game.new()])
-
-      assert %Results{mode: :by_game} = State.results(state, :by_game)
-      assert %Results{mode: :ranking} = State.results(state, :ranking)
-    end
+    assert {:error, :enoent} = State.new(loader: bad_loader) |> State.load_games()
   end
 end

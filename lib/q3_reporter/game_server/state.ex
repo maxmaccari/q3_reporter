@@ -8,9 +8,12 @@ defmodule Q3Reporter.GameServer.State do
             by_game: nil,
             ranking: nil,
             subscribers: [],
-            log_adapter: nil
+            initializer: &__MODULE__.__default_initializer__/1,
+            loader: &__MODULE__.__default_loader__/1
 
   @type mode :: :by_game | :ranking
+
+  @type initializer :: (String.t() -> {:ok, list(Game.t())} | {:error, any()})
 
   @type t :: %__MODULE__{
           path: String.t(),
@@ -19,7 +22,7 @@ defmodule Q3Reporter.GameServer.State do
           by_game: Results.t(),
           ranking: Results.t(),
           subscribers: list({pid, mode}),
-          log_adapter: atom() | nil
+          initializer: initializer()
         }
 
   @spec new(keyword) :: t
@@ -27,13 +30,8 @@ defmodule Q3Reporter.GameServer.State do
     struct!(__MODULE__, attrs)
   end
 
-  @spec set_watch_pid(t, pid) :: t
-  def set_watch_pid(%__MODULE__{} = state, watch_pid) do
-    %{state | watch_pid: watch_pid}
-  end
-
-  @spec set_games(t(), list(Game.t()) | []) :: t()
-  def set_games(%__MODULE__{} = state, games) do
+  @spec update_games(t(), list(Game.t()) | []) :: t()
+  def update_games(%__MODULE__{} = state, games) do
     state
     |> put_games(games)
     |> generate_by_games()
@@ -72,4 +70,24 @@ defmodule Q3Reporter.GameServer.State do
   @spec results(t(), mode) :: Results.t()
   def results(%__MODULE__{by_game: by_game}, :by_game), do: by_game
   def results(%__MODULE__{ranking: ranking}, :ranking), do: ranking
+
+  def initialize(%__MODULE__{initializer: initializer, path: path} = state) do
+    case initializer.(path) do
+      {:ok, games} -> {:ok, update_games(state, games)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def load_games(%__MODULE__{loader: loader, path: path} = state) do
+    case loader.(path) do
+      {:ok, games} -> {:ok, update_games(state, games)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec __default_initializer__(String.t()) :: {:ok, []}
+  def __default_initializer__(_path), do: {:ok, []}
+
+  @spec __default_loader__(String.t()) :: {:ok, []}
+  def __default_loader__(_path), do: {:ok, []}
 end

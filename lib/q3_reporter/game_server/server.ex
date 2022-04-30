@@ -1,7 +1,6 @@
 defmodule Q3Reporter.GameServer.Server do
   use GenServer
 
-  alias Q3Reporter.{Core, Log, LogWatcher}
   alias Q3Reporter.GameServer.State
 
   def start_link(opts \\ []) do
@@ -46,25 +45,19 @@ defmodule Q3Reporter.GameServer.Server do
   end
 
   def init(opts) do
-    with {:ok, games} <- load_games(opts[:path], opts[:log_adapter]),
-         {:ok, watch_pid} <- watch_and_subscribe_to_log(opts[:path], opts[:log_adapter]) do
-      state =
-        opts
-        |> State.new()
-        |> State.set_games(games)
-        |> State.set_watch_pid(watch_pid)
-
-      {:ok, state}
+    case initialize(opts) do
+      {:ok, state} -> {:ok, state}
+      {:error, reason} -> {:stop, reason}
     end
   end
 
-  def handle_continue(:reload_games, %{path: path, log_adapter: adapter} = state) do
-    case load_games(path, adapter) do
-      {:ok, games} ->
-        {:noreply, State.set_games(state, games), {:continue, :notify_subscribers}}
+  def handle_continue(:reload_games, state) do
+    case State.load_games(state) do
+      {:ok, state} ->
+        {:noreply, state, {:continue, :notify_subscribers}}
 
-      {:stop, reason} ->
-        {:stop, reason, state}
+      {:error, reason} ->
+        {:stop, {:shutdown, reason}, state}
     end
   end
 
@@ -74,14 +67,11 @@ defmodule Q3Reporter.GameServer.Server do
     {:noreply, state}
   end
 
-  def handle_info({:file_updated, watch_pid, _}, %{watch_pid: watch_pid} = state) do
+  def handle_info({:file_updated, _, _}, state) do
     {:noreply, state, {:continue, :reload_games}}
   end
 
-  def handle_info(
-        {:DOWN, _ref, :process, watch_pid, {:shutdown, reason}},
-        %{watch_pid: watch_pid} = state
-      ) do
+  def handle_info({:DOWN, _ref, :process, _watcher, {:shutdown, reason}}, state) do
     {:stop, {:shutdown, reason}, state}
   end
 
@@ -103,16 +93,6 @@ defmodule Q3Reporter.GameServer.Server do
     {:reply, State.results(state, mode), state}
   end
 
-  def terminate({:shutdown, {:error, :enoent}}, _state), do: :ok
-
-  def terminate(_reason, %{watch_pid: watch_pid}) do
-    LogWatcher.close(watch_pid)
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
-  end
-
   @task_supervisor Q3Reporter.GameServer.TaskSupervisor
 
   defp notify_subscribers(state) do
@@ -131,23 +111,9 @@ defmodule Q3Reporter.GameServer.Server do
     |> Stream.run()
   end
 
-  defp watch_and_subscribe_to_log(path, adapter) do
-    case LogWatcher.open(path, log_adapter: adapter) do
-      {:ok, watch_pid} ->
-        Process.monitor(watch_pid)
-        :ok = LogWatcher.subscribe(watch_pid)
-
-        {:ok, watch_pid}
-
-      {:error, reason} ->
-        {:stop, reason}
-    end
-  end
-
-  defp load_games(path, adapter) do
-    case Log.read(path, adapter) do
-      {:ok, content} -> {:ok, Core.log_to_games(content)}
-      {:error, reason} -> {:stop, reason}
-    end
+  defp initialize(opts) do
+    opts
+    |> State.new()
+    |> State.initialize()
   end
 end
