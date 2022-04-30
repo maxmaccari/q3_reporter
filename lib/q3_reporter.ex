@@ -3,9 +3,9 @@ defmodule Q3Reporter do
   Module that contains the logic for parsing Quake 3 logs.
   """
 
-  alias Q3Reporter.Log
   alias Q3Reporter.Core
   alias Q3Reporter.Core.Results
+  alias Q3Reporter.Log
 
   @type opts :: keyword()
 
