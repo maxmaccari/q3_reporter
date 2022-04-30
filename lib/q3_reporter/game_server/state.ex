@@ -82,6 +82,7 @@ defmodule Q3Reporter.GameServer.State do
   def results(%__MODULE__{by_game: by_game}, :by_game), do: by_game
   def results(%__MODULE__{ranking: ranking}, :ranking), do: ranking
 
+  @spec start_watcher(t()) :: {:error, any} | {:ok, t()}
   def start_watcher(%__MODULE__{watcher: watcher, path: path} = state) do
     case watcher.(path) do
       {:ok, pid} -> {:ok, update_watcher_pid(state, pid)}
@@ -89,6 +90,7 @@ defmodule Q3Reporter.GameServer.State do
     end
   end
 
+  @spec load_games(t()) :: {:error, any} | {:ok, t()}
   def load_games(%__MODULE__{loader: loader, path: path} = state) do
     case loader.(path) do
       {:ok, games} -> {:ok, update_games(state, games)}
