@@ -3,6 +3,7 @@ defmodule Q3Reporter.GameServer.ServerTest do
 
   alias Q3Reporter.Core.Results
   alias Q3Reporter.GameServer.Server
+  alias Q3Reporter.GameServer
 
   import Support.LogHelpers
 
@@ -17,7 +18,7 @@ defmodule Q3Reporter.GameServer.ServerTest do
   end
 
   defp with_server(%{path: path} = context) do
-    {:ok, _pid} = start_supervised({Server, path: path})
+    {:ok, _pid} = GameServer.start(path)
 
     context
   end
@@ -25,7 +26,7 @@ defmodule Q3Reporter.GameServer.ServerTest do
   setup :with_log
 
   test "should start a server with the correct path", %{path: path} do
-    assert {:ok, pid} = start_supervised({Server, path: path})
+    assert {:ok, pid} = GameServer.start(path)
     assert Process.alive?(pid)
   end
 

@@ -12,7 +12,7 @@ defmodule Q3Reporter.GameServer.Server do
   end
 
   def via_tuple(path) do
-    {:via, Registry, {Q3Reporter.Registry, {__MODULE__, path}}}
+    {:via, Registry, {Q3Reporter.GameServer.Registry, {__MODULE__, path}}}
   end
 
   def subscribe(path, mode \\ :by_game) do
@@ -37,6 +37,12 @@ defmodule Q3Reporter.GameServer.Server do
     path
     |> via_tuple()
     |> GenServer.call({:results, mode})
+  end
+
+  def stop(path) do
+    path
+    |> via_tuple()
+    |> GenServer.stop()
   end
 
   def init(opts) do
