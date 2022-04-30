@@ -29,7 +29,7 @@ defmodule Q3Reporter.UpdateChecker do
   @type checker :: Q3Reporter.UpdateChecker.State.checker()
 
   @doc """
-  Open a file to be monitored for the given `path`.
+  Open a file to be monitored for the given `path` using the given `checker` function.
   """
   @spec open(String.t(), checker, keyword()) :: DynamicSupervisor.on_start_child()
   def open(path, checker, opts \\ []) do
