@@ -4,11 +4,11 @@ defmodule Q3ReporterTest do
   import Support.LogHelpers
 
   alias Q3Reporter
-  alias Q3Reporter.Core.Results
+  alias Q3Reporter.Core.{Game, Results}
 
   alias Q3Reporter.Log.FileAdapter
 
-  describe "Parse logs" do
+  describe "Parse logs to Results" do
     @path Path.join(__DIR__, "./fixtures/example.log")
 
     test "should return game contents with valid file and default mode" do
@@ -26,11 +26,23 @@ defmodule Q3ReporterTest do
     end
   end
 
+  describe "Parse logs to Games" do
+    @path Path.join(__DIR__, "./fixtures/example.log")
+
+    test "should return games with valid file" do
+      assert {:ok, [%Game{}]} = Q3Reporter.log_to_games(@path, FileAdapter)
+    end
+
+    test "should return error with invalid file path" do
+      assert {:error, _msg} = Q3Reporter.log_to_games("invalid", FileAdapter)
+    end
+  end
+
   describe "Watch for log updates" do
     test "should receive :update messages when mtime changes" do
       path = create_log()
 
-      assert {:ok, pid} = Q3Reporter.start_watch_log_updates(path)
+      assert {:ok, pid} = Q3Reporter.watch_log_updates(path)
 
       touch_log(path)
 
@@ -40,13 +52,45 @@ defmodule Q3ReporterTest do
     test "should stop update checker server" do
       path = create_log()
 
-      assert {:ok, pid} = Q3Reporter.start_watch_log_updates(path)
+      assert {:ok, pid} = Q3Reporter.watch_log_updates(path)
       assert :ok = Q3Reporter.stop_watch_log_updates(pid)
       assert :error = Q3Reporter.stop_watch_log_updates(pid)
 
       touch_log(path)
 
       refute_receive {:updated, ^pid, _mtime}
+    end
+  end
+
+  describe "Watch for games updates" do
+    test "should receive :game_results messages when mtime changes" do
+      path = create_log()
+
+      assert :ok = Q3Reporter.watch_games(path)
+      assert :ok = Q3Reporter.watch_games(path, :ranking)
+
+      touch_log(path)
+
+      assert_receive {:game_results, ^path, :by_game,
+                      %Q3Reporter.Core.Results{entries: [], mode: :by_game}}
+
+      assert_receive {:game_results, ^path, :ranking,
+                      %Q3Reporter.Core.Results{entries: [], mode: :ranking}}
+    end
+
+    test "should return error if log doesn't exist" do
+      assert {:error, :enoent} = Q3Reporter.watch_games("invalid")
+    end
+
+    test "should allow stop watching for game results" do
+      path = create_log()
+
+      assert :ok = Q3Reporter.watch_games(path)
+      assert :ok = Q3Reporter.stop_watch_games(path)
+
+      touch_log(path)
+
+      refute_receive {:game_results, ^path, :by_game, _}
     end
   end
 end

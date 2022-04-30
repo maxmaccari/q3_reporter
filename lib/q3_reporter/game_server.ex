@@ -14,7 +14,7 @@ defmodule Q3Reporter.GameServer do
       iex> Q3Reporter.GameServer
       iex> {:ok, pid} = GameServer.start(
         path,
-        watcher: Q3Reporter.start_watch_log_updates/1,
+        watcher: Q3Reporter.watch_log_updates/1,
         loader: Q3Reporter.parse/1
       )
       {:ok, #PID<0, 100, 0>}
