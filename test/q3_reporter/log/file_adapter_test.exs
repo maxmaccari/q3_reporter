@@ -33,5 +33,7 @@ defmodule Q3Reporter.Log.FileAdapterTest do
     File.touch(@example_file, NaiveDateTime.to_erl(new_mtime))
 
     assert {:ok, ^new_mtime} = Log.mtime(@example_file, FileAdapter)
+
+    assert {:error, :enoent} = Log.mtime("noexist", FileAdapter)
   end
 end
