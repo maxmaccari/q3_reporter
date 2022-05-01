@@ -1,5 +1,5 @@
 defmodule Q3ReporterCli.CliTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case
 
   alias Q3ReporterCli.Cli
 
@@ -12,14 +12,10 @@ defmodule Q3ReporterCli.CliTest do
     path = create_log("test/fixtures/example.log")
     push_log(path, @content)
 
-    on_exit(fn ->
-      delete_log(path)
-    end)
-
     Map.put(context, :path, path)
   end
 
-  test "show help when send invalid params" do
+  test "should show help when send invalid params" do
     assert capture_io(:stderr, fn ->
              Cli.main()
            end) ==
@@ -29,17 +25,18 @@ defmodule Q3ReporterCli.CliTest do
              Options:
                --ranking => Output ranking instead summary
                --json => Output result as json
+               --watch => Watch for log changes
 
              """
   end
 
-  test "show error when give a file that doesn't exist" do
+  test "should show error when give a file that doesn't exist" do
     assert capture_io(:stderr, fn ->
              Cli.main(["noexists"])
            end) == "'noexists' not found...\n"
   end
 
-  test "parse a file normally" do
+  test "should parse a file normally" do
     assert capture_io(fn ->
              Cli.main(["test/fixtures/example.log"])
            end) == """
@@ -49,7 +46,7 @@ defmodule Q3ReporterCli.CliTest do
            """
   end
 
-  test "parse a file and print in json format" do
+  test "should parse a file and print in json format" do
     assert capture_io(fn ->
              Cli.main(["--json", "test/fixtures/example.log"])
            end) == """
@@ -69,7 +66,7 @@ defmodule Q3ReporterCli.CliTest do
            """
   end
 
-  test "parse a file with ranking option" do
+  test "should parse a file with ranking option" do
     assert capture_io(fn ->
              Cli.main(["--ranking", "test/fixtures/example.log"])
            end) == """
@@ -78,7 +75,7 @@ defmodule Q3ReporterCli.CliTest do
            """
   end
 
-  test "parse a file with ranking option in json format" do
+  test "should parse a file with ranking option in json format" do
     assert capture_io(fn ->
              Cli.main(["--ranking", "--json", "test/fixtures/example.log"])
            end) ==
@@ -90,6 +87,41 @@ defmodule Q3ReporterCli.CliTest do
                  "nickname": "Isgalamido"
                }
              ]
+             """
+  end
+
+  test "should display file updates in watch mode" do
+    assert capture_io(fn ->
+             parent = self()
+
+             pid =
+               spawn(fn ->
+                 Cli.main(["--watch", "test/fixtures/example.log"])
+                 send(parent, :finish)
+               end)
+
+             # Simulate log touch
+             {:ok, result} = Q3Reporter.parse("test/fixtures/example.log")
+             send(pid, {:game_results, "test/fixtures/example.log", :by_game, result})
+
+             send(pid, :interrupt)
+             assert_receive :finish, 200
+           end) ==
+             """
+             \e[2J
+             # Game 1 #
+             Isgalamido: 0 kills / 0 deaths
+             Total Kills: 0
+
+
+             Press Ctrl/Command + C to exit...
+             \e[2J
+             # Game 1 #
+             Isgalamido: 0 kills / 0 deaths
+             Total Kills: 0
+
+
+             Press Ctrl/Command + C to exit...
              """
   end
 end
