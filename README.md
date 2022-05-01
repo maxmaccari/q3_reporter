@@ -35,3 +35,4 @@ For example:
 
 - `--ranking` => Output ranking instead summary
 - `--json` => Output result as json
+- `--watch` => Watch for log changes

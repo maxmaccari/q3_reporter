@@ -1,5 +1,5 @@
 defmodule Q3Reporter.UpdateCheckerTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case
 
   alias Q3Reporter.{Log, UpdateChecker}
 
