@@ -2,6 +2,7 @@ defmodule Q3ReporterTest do
   use ExUnit.Case, asyc: true
 
   import Support.LogHelpers
+  import Support.ErrorAdapters
 
   alias Q3Reporter
   alias Q3Reporter.Core.{Game, Results}
@@ -22,7 +23,17 @@ defmodule Q3ReporterTest do
     end
 
     test "should return error with invalid file path" do
-      assert {:error, _msg} = Q3Reporter.parse("invalid", log_adapter: FileAdapter)
+      assert {:error, "'invalid' not found..."} =
+               Q3Reporter.parse("invalid", log_adapter: FileAdapter)
+
+      assert {:error, "You don't have permission to open 'invalid'..."} =
+               Q3Reporter.parse("invalid", log_adapter: error_adapter(:eacces))
+
+      assert {:error, "There's no enough memory to open 'invalid'..."} =
+               Q3Reporter.parse("invalid", log_adapter: error_adapter(:enomem))
+
+      assert {:error, "Error trying to open 'invalid'"} =
+               Q3Reporter.parse("invalid", log_adapter: error_adapter(:unknown))
     end
   end
 
