@@ -72,13 +72,7 @@ defmodule Q3Reporter.UpdateChecker do
   @spec stop(pid) :: :ok
   defdelegate stop(pid), to: Server
 
-  # coveralls-ignore-start
-  @doc false
-  @spec start_link(keyword) :: Supervisor.on_start()
-  defdelegate start_link(opts \\ []), to: CheckerSupervisor
-
   @doc false
   @spec child_spec(keyword()) :: Supervisor.child_spec()
   defdelegate child_spec(params), to: CheckerSupervisor
-  # coveralls-ignore-end
 end
