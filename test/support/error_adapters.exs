@@ -1,8 +1,6 @@
 defmodule Support.ErrorAdapters do
   import Mox
 
-  @errors [:eacces, :enomem, :unknown]
-
   defp module_name(error) do
     error_module =
       error
@@ -12,7 +10,7 @@ defmodule Support.ErrorAdapters do
     String.to_atom("#{__MODULE__}.#{error_module}")
   end
 
-  def error_adapter(error) when error in @errors do
+  def error_adapter(error) do
     module = module_name(error)
     Mox.defmock(module, for: Q3Reporter.Log)
 
